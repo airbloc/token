@@ -9,7 +9,7 @@ contract AirblocGenesisToken is MintableToken {
 
     // Token Information
     string public name = "Airbloc Genesis Token";
-    string public symbol = "ABGL";
+    string public symbol = "ABLG";
     uint256 public decimals = 18;
     uint256 public totalSupply = 0;
 
