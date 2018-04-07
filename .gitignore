@@ -1,6 +1,5 @@
 .idea
 .DS_Store
-package-lock.json
 Thumbs.db
 node_modules
 build
