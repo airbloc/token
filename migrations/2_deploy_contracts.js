@@ -1,4 +1,4 @@
-var AirblocToken = artifacts.require("./AirblocToken.sol");
+var abl = artifacts.require("./ABL.sol");
 
 module.exports = function(deployer) {
     const PVT = web3.eth.accounts[26];
@@ -6,6 +6,5 @@ module.exports = function(deployer) {
     const PUB = web3.eth.accounts[28];
     const DEV = web3.eth.accounts[29];
 
-    deployer.deploy(AirblocToken, PVT, PRE, PUB, DEV);
-    
+    deployer.deploy(abl, PVT, PRE, PUB, DEV);
 }

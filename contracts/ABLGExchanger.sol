@@ -2,14 +2,13 @@ pragma solidity ^0.4.19;
 
 import "zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
 import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Whitelist.sol";
 import "./TokenTimelock.sol";
 import "./AirblocToken.sol";
 
 
-contract PrivateSale is Ownable, Whitelist {
+contract GenesisSwapContract is Whitelist {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
