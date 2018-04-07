@@ -1,0 +1,23 @@
+{
+  "name": "token",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frostornge/token.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/frostornge/token/issues"
+  },
+  "homepage": "https://github.com/frostornge/token#readme",
+  "dependencies": {
+    "zeppelin-solidity": "1.8.0"
+  }
+}
