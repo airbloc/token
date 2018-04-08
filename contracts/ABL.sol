@@ -3,7 +3,7 @@ pragma solidity ^0.4.19;
 import "zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 
 
-contract AirblocToken is MintableToken {
+contract ABL is MintableToken {
     // Wallet
     address pvt;
     address pre;
@@ -22,7 +22,7 @@ contract AirblocToken is MintableToken {
     string public symbol = "ABL";
     uint256 public decimals = 18;
 
-    function AirblocToken(
+    function ABL(
         address _pvt,
         address _pre,
         address _pub,

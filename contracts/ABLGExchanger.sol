@@ -5,7 +5,7 @@ import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Whitelist.sol";
 import "./TokenTimelock.sol";
-import "./AirblocToken.sol";
+import "./ABL.sol";
 
 
 contract GenesisSwapContract is Whitelist {
