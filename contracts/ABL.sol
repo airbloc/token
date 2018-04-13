@@ -1,48 +1,41 @@
 pragma solidity ^0.4.19;
 
-import "zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
-contract ABL is MintableToken {
+contract ABL is StandardToken, Ownable {
     // Wallet
-    address pvt;
-    address pre;
-    address pub;
-    address dev;
+    address private dtb;    // distribution
+    address private dev;    // developer
 
     // Token Distribution Rate
-    uint256 constant SUM = 300000000;
-    uint256 constant PVT = 43500000;
-    uint256 constant PRE = 44750000;
-    uint256 constant PUB = 80000000;
-    uint256 constant DEV = 131750000;
+    uint256 public constant SUM = 100;   // totalSupply
+    uint256 public constant DISTRIBUTION = 50; // distribution
+    uint256 public constant DEVELOPERS = 50;   // developer
 
     // Token Information
     string public name = "Airbloc Token";
     string public symbol = "ABL";
     uint256 public decimals = 18;
+    uint256 public totalSupply = SUM;
 
     function ABL(
-        address _pvt,
-        address _pre,
-        address _pub,
+        address _dtb,
         address _dev
         )
         public {
-            require(_pvt != 0x0);
-            require(_pre != 0x0);
-            require(_pub != 0x0);
+            require(_dtb != 0x0);
             require(_dev != 0x0);
-            require(PVT + PRE + PUB + DEV == SUM);
+            require(DISTRIBUTION + DEVELOPERS == SUM);
 
-            pvt = _pvt;
-            pre = _pre;
-            pub = _pub;
+            dtb = _dtb;
             dev = _dev;
 
-            balances[pvt] = PVT;
-            balances[pre] = PRE;
-            balances[pub] = PUB;
-            balances[dev] = DEV;
+            balances[dtb] = DISTRIBUTION;
+            emit Transfer(0x0, dtb, DISTRIBUTION);
+
+            balances[dev] = DEVELOPERS;
+            emit Transfer(0x0, dev, DEVELOPERS);
         }
 }

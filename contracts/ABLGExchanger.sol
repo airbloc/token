@@ -46,7 +46,7 @@ contract GenesisSwapContract is Whitelist {
 
         // Lock 30 percent of given bonus
         if(lockList[msg.sender] == 0x0) {
-            TokenTimelock lockContract = new TokenTimelock(AirblocToken(atoken), owner, msg.sender, block.timestamp + 1 years);
+            TokenTimelock lockContract = new TokenTimelock(ABL(atoken), owner, msg.sender, block.timestamp + 1 years);
             lockList[msg.sender] = address(lockContract);
         }
 
