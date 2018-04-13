@@ -3,7 +3,11 @@ version: 2
 jobs:
   build:
     docker:
+      - image: circleci/node:9.11.0
       - image: trufflesuite/ganache-cli:latest
+
+    working_directory: ~/token
+
     steps:
       - checkout
 
@@ -21,5 +25,17 @@ jobs:
             tar -xz -C /tmp -f /tmp/docker-$VER.tgz
             mv /tmp/docker/* /usr/bin
 
-      - run: |
-          docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 30 -e 500
+      - run:
+          name: Install Truffle
+          command: |
+            yarn global add truffle
+
+      - run:
+          name: Run Ganache-Client
+          command: |
+            docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 30 -e 500
+
+      - run:
+          name: Run Test
+          command: |
+            truffle test
