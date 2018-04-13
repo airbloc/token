@@ -9,4 +9,4 @@ jobs:
 
       # run test
       - run:
-        command: docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 30 -e 500
+        docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 30 -e 500
