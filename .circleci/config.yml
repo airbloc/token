@@ -17,12 +17,8 @@ jobs:
       - run:
           name: Install Truffle
           command: |
+            sudo npm install -E zeppelin-solidity
             sudo npm install -g truffle
-
-      - run:
-          name: Run Ganache-Client
-          command: |
-            docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 30 -e 500
 
       - run:
           name: Run Test
