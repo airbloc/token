@@ -1,4 +1,11 @@
 version: 1
+
+machine:
+  node:
+    version: 9.11.0
+  services:
+    - docker
+
 jobs:
   build:
     docker:
