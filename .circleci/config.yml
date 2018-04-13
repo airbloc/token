@@ -5,9 +5,9 @@ jobs:
     docker:
       - image: circleci/node:8.11.1
       - image: trufflesuite/ganache-cli
-          command: |
-            -a 50
-            -e 500
+        command: |
+          -a 50
+          -e 500
 
     working_directory: ~/token
 
