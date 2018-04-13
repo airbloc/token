@@ -1,18 +1,12 @@
 version: 1
 
-machine:
-  node:
-    version: 9.11.0
-    services:
-      - docker
+jobs:
+  build:
+    docker:
+      - image: trufflesuite/ganache-cli:latest
+    steps:
+      - checkout
 
-      jobs:
-        build:
-          docker:
-            - image: trufflesuite/ganache-cli:latest
-            steps:
-              - checkout
-
-              # run test
-              - run:
-                command: docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 30 -e 500
+      # run test
+      - run:
+        command: docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 30 -e 500
