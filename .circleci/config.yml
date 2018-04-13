@@ -8,5 +8,5 @@ jobs:
       - checkout
 
       # run test
-      - run:
+      - run: |
         docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 30 -e 500
