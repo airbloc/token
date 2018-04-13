@@ -9,4 +9,4 @@ jobs:
       # run test
       - run:
           command:
-            truffle test
+            npm test
