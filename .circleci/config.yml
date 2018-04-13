@@ -4,6 +4,7 @@ jobs:
   build:
     docker:
       - image: circleci/node:8.11.1
+      - image: trufflesuite/ganache-cli
 
     working_directory: ~/token
 
@@ -16,7 +17,7 @@ jobs:
       - run:
           name: Install Truffle
           command: |
-            yarn global add truffle
+            sudo npm install -g truffle
 
       - run:
           name: Run Ganache-Client
