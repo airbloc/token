@@ -1,4 +1,4 @@
-const ABL = artifacts.require('ABL');
+const ABL = artifacts.require('./ABL.sol');
 
 
 contract('Airbloc Token', async (accounts) => {

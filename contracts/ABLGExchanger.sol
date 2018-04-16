@@ -1,14 +1,14 @@
 pragma solidity ^0.4.19;
 
-import "zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
-import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
-import "./Whitelist.sol";
+import "./zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
+import "./zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "./zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./zeppelin-solidity/contracts/ownership/Whitelist.sol";
 import "./TokenTimelock.sol";
 import "./ABL.sol";
 
 
-contract GenesisSwapContract is Whitelist {
+contract ABLGExchanger is Whitelist {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
@@ -21,7 +21,7 @@ contract GenesisSwapContract is Whitelist {
     ERC20 public atoken;
     ERC20 public gtoken;
 
-    function GenesisSwapContract(ERC20 _atoken, ERC20 _gtoken, address _origin) public {
+    function ABLGExchanger(ERC20 _atoken, ERC20 _gtoken, address _origin) public {
         /* require(_gtoken != 0x0); */
         require(_origin != 0x0);
 
@@ -30,7 +30,7 @@ contract GenesisSwapContract is Whitelist {
         gtoken = _gtoken;
     }
 
-    function swap() public isWhitelisted returns(address) {
+    function swap() public onlyWhitelisted returns(address) {
         uint256 amount = gtoken.balanceOf(msg.sender);
 
         require(amount != 0);

@@ -1,6 +1,6 @@
-const ABL = artifacts.require('ABL');
-const ABLG = artifacts.require('ABLG');
-const ABLGE = artifacts.require('GenesisSwapContract');
+const ABL = artifacts.require('./ABL.sol');
+const ABLG = artifacts.require('./ABLG.sol');
+const ABLGE = artifacts.require('./ABLGExchanger.sol');
 
 
 contract('Airbloc Genesis Token Exchanger', async (accounts) => {
