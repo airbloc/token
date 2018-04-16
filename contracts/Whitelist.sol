@@ -12,10 +12,12 @@ contract Whitelist is Ownable {
     }
 
     function register(address _buyer) public onlyOwner {
+        require(_buyer != 0x0);
         whitelist[_buyer] = true;
     }
 
     function unregister(address _buyer) public onlyOwner {
+        require(_buyer != 0x0);
         whitelist[_buyer] = false;
     }
 }

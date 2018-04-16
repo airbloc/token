@@ -7,21 +7,13 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract ABLG is StandardToken, Ownable {
 
-    mapping (address => uint256) holders;
+    mapping (address => uint256) public holders;
 
     // Token Information
     string public name = "Airbloc Genesis Token";
     string public symbol = "ABLG";
     uint256 public decimals = 18;
     uint256 public totalSupply = 0;
-
-    function addHodler(
-        address _holder,
-        uint256 _amount
-        )
-        public {
-            require(mint(_holder, _amount));
-        }
 
     // Mint
     event Mint(address indexed to, uint256 amount);

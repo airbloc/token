@@ -1,27 +1,30 @@
 {
-  "name": "token",
-  "version": "1.0.0",
-  "description": "This is contract of airbloc token.",
-  "main": "truffle-config.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "truffle test",
-    "posttest" : "docker rm -f ganache"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/frostornge/token.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/frostornge/token/issues"
-  },
-  "homepage": "https://github.com/frostornge/token#readme",
-  "dependencies": {
-    "zeppelin-solidity": "1.8.0"
-  }
+    "name": "token",
+    "version": "1.0.0",
+    "description": "This is contract of airbloc token.",
+    "main": "truffle-config.js",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "ganache-run": "docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 50 -e 500",
+        "ganache-stop": "docker rm -f ganache",
+        "test": "npm run ganache-run; truffle test; npm run ganache-stop",
+        "migrate": "truffle migrate --reset",
+        "console": "npm run ganache-run; npm run migrate; truffle console; npm run ganache-stop"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/frostornge/token.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/frostornge/token/issues"
+    },
+    "homepage": "https://github.com/frostornge/token#readme",
+    "dependencies": {
+        "zeppelin-solidity": "1.8.0"
+    }
 }

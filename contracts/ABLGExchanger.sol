@@ -21,16 +21,16 @@ contract GenesisSwapContract is Whitelist {
     ERC20 public atoken;
     ERC20 public gtoken;
 
-    function PrivateSale(ERC20 _atoken, address _gtoken, address _origin) public {
-        require(_gtoken != 0x0);
+    function GenesisSwapContract(ERC20 _atoken, ERC20 _gtoken, address _origin) public {
+        /* require(_gtoken != 0x0); */
         require(_origin != 0x0);
 
         origin = _origin;
         atoken = _atoken;
-        gtoken = ERC20(_gtoken);
+        gtoken = _gtoken;
     }
 
-    function swap() public isWhitelisted {
+    function swap() public isWhitelisted returns(address) {
         uint256 amount = gtoken.balanceOf(msg.sender);
 
         require(amount != 0);
@@ -46,7 +46,7 @@ contract GenesisSwapContract is Whitelist {
 
         // Lock 30 percent of given bonus
         if(lockList[msg.sender] == 0x0) {
-            TokenTimelock lockContract = new TokenTimelock(ABL(atoken), owner, msg.sender, block.timestamp + 1 years);
+            TokenTimelock lockContract = new TokenTimelock(ABL(atoken), owner, msg.sender, block.timestamp + 1 seconds);
             lockList[msg.sender] = address(lockContract);
         }
 
@@ -54,5 +54,7 @@ contract GenesisSwapContract is Whitelist {
 
         // Send sedner's ABGL Tokens to origin
         gtoken.safeTransferFrom(msg.sender, origin, amount);
+
+        return lockList[msg.sender];
     }
 }

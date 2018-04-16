@@ -1,5 +1,6 @@
 const ABLG = artifacts.require("ABLG");
 
+
 contract("Airbloc Genesis Token", async (accounts) => {
     let ablgi;
     const test = accounts[0];
