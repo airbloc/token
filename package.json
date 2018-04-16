@@ -24,7 +24,11 @@
         "url": "https://github.com/frostornge/token/issues"
     },
     "homepage": "https://github.com/frostornge/token#readme",
-    "dependencies": {
-        "zeppelin-solidity": "1.8.0"
+    "dependencies": {},
+    "devDependencies": {
+        "chai": "^4.1.2",
+        "chai-as-promised": "^7.1.1",
+        "chai-bignumber": "^2.0.2",
+        "zeppelin-solidity": "^1.8.0"
     }
 }
