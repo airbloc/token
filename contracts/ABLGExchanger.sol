@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
+import "./zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "./zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "./zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./zeppelin-solidity/contracts/ownership/Whitelist.sol";
@@ -46,7 +46,7 @@ contract ABLGExchanger is Whitelist {
 
         // Lock 30 percent of given bonus
         if(lockList[msg.sender] == 0x0) {
-            TokenTimelock lockContract = new TokenTimelock(ABL(atoken), owner, msg.sender, block.timestamp + 1 seconds);
+            TokenTimelock lockContract = new TokenTimelock(ABL(atoken), owner, msg.sender, block.timestamp + 1 years);
             lockList[msg.sender] = address(lockContract);
         }
 
@@ -57,4 +57,6 @@ contract ABLGExchanger is Whitelist {
 
         return lockList[msg.sender];
     }
+
+    // TODO : Bulk release
 }

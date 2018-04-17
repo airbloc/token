@@ -19,7 +19,6 @@ contract TokenTimelock is Ownable {
         releaseTime = _releaseTime;
     }
 
-
     function release() public {
         require(block.timestamp >= releaseTime);
 

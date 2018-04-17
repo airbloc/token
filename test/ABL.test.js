@@ -1,43 +1,41 @@
-const ABL = artifacts.require('./ABL.sol');
+const ABL = artifacts.require('ABL');
+const BigNumber = web3.BigNumber;
 
+require('chai')
+  .use(require('chai-as-promised'))
+  .use(require('chai-bignumber')(BigNumber))
+  .should();
 
-contract('Airbloc Token', async (accounts) => {
+contract('Airbloc Token', function ([_, dtb, dev, test]) {
     let abli;
-    const dtb = accounts[0];
-    const dev = accounts[1];
     const amount = 1;
 
-    beforeEach(async () => {
+    const _name = 'Airbloc Token';
+    const _symbol = 'ABL';
+    const _decimals = 18;
+
+    before(async () => {
         abli = await ABL.new(dtb, dev);
     })
 
+    // Token Options
     it('has a name', async () => {
-        const name = await abli.name();
-        assert.equal(name, 'Airbloc Token');
+        const name = await abli.name()
+        name.should.be.equal(_name);
     });
 
     it('has a symbol', async () => {
-        const symbol = await abli.symbol();
-        assert.equal(symbol, 'ABL');
+        const symbol = await abli.symbol()
+        symbol.should.be.equal(_symbol);
     });
 
     it('has 18 decimals', async () => {
-        const decimals = await abli.decimals();
-        assert(decimals.eq(18));
-    });
-
-    it('assigns the initial total supply to the creator', async function () {
-        const totalSupply = await abli.totalSupply();
-        const dtbBalance = await abli.balanceOf(dtb);
-        const devBalance = await abli.balanceOf(dev);
-
-        assert.equal(dtbBalance.toNumber() + devBalance.toNumber(), totalSupply);
-        assert(dtbBalance.eq(50));
-        assert(devBalance.eq(50));
+        const decimals = await abli.decimals()
+        decimals.should.be.bignumber.equal(_decimals);
     });
 
     // Mint
-    it("should mint correctly", async() => {
+    it("should mint correctly", async () => {
         const beforeBalance = await abli.balanceOf(dtb);
         const beforeTotalSupply = await abli.totalSupply();
 
@@ -46,14 +44,14 @@ contract('Airbloc Token', async (accounts) => {
         const afterBalance = await abli.balanceOf(dtb);
         const afterTotalSupply = await abli.totalSupply();
 
-        assert.equal(afterBalance - beforeBalance, amount, 'there are some problems in minting process');
-        assert.equal(afterTotalSupply - beforeTotalSupply, amount, 'there are some problems in minting process')
+        const balanceGap = afterBalance - beforeBalance;
+        balanceGap.should.be.equal(amount, 'there are some problems in minting process');
+        const supplyGap = afterTotalSupply - beforeTotalSupply;
+        supplyGap.should.be.equal(amount, 'there are some problems in minting process');
     });
 
     // Burn
-    it("should burn correctly", async() => {
-        await abli.mint(dtb, amount);
-
+    it("should burn correctly", async () => {
         const beforeBalance = await abli.balanceOf(dtb);
         const beforeTotalSupply = await abli.totalSupply();
 
@@ -62,7 +60,9 @@ contract('Airbloc Token', async (accounts) => {
         const afterBalance = await abli.balanceOf(dtb);
         const afterTotalSupply = await abli.totalSupply();
 
-        assert.equal(beforeBalance - afterBalance, amount, 'there are some problems in burning process');
-        assert.equal(beforeTotalSupply - afterTotalSupply, amount, 'there are some problems in burning process')
+        const balanceGap = beforeBalance - afterBalance;
+        balanceGap.should.be.equal(amount, 'there are some problems in burning process');
+        const supplyGap = beforeTotalSupply - afterTotalSupply;
+        supplyGap.should.be.equal(amount, 'there are some problems in burning process');
     });
 })

@@ -1,29 +1,16 @@
-const ABL = artifacts.require('./ABL.sol');
-const ABLG = artifacts.require('./ABLG.sol');
-const ABLGE = artifacts.require('./ABLGExchanger.sol');
+const ABL = artifacts.require('ABL');
+const ABLG = artifacts.require('ABLG');
+const ABLGE = artifacts.require('ABLGExchanger');
 
 
-contract('Airbloc Genesis Token Exchanger', async (accounts) => {
-    let abl;
-    let ablg;
-    let exchanger;
-
-    const dtb = accounts[0];
-    const dev = accounts[1];
-    const test = accounts[2];
+contract('Airbloc Genesis Token Exchanger', function ([_, dtb, dev, test]) {
     const amount = 10;
 
     beforeEach(async () => {
-        abl = await ABL.new(dtb, dev);
-        ablg = await ABLG.new();
-        exchanger = await ABLGE.new(abl.address, ablg.address, dtb);
+        this.abl = await ABL.new(dtb, dev);
+        this.ablg = await ABLG.new();
+        this.exchanger = await ABLGE.new(this.abl.address, this.ablg.address, dtb);
     })
 
-    it('', async () => {
-
-    })
-
-    it('after', async () => {
-
-    })
+    
 })

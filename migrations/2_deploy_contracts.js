@@ -1,8 +1,7 @@
-const ABL = artifacts.require('ABL');
-const ABLG = artifacts.require('ABLG');
-const ABLGExchanger = artifacts.require('GenesisSwapContract');
-const TokenTimelock = artifacts.require('TokenTimelock');
-const Whitelist = artifacts.require('Whitelist');
+const ABL = artifacts.require('./ABL.sol');
+const ABLG = artifacts.require('./ABLG.sol');
+const ABLGExchanger = artifacts.require('./ABLGExchanger.sol');
+const TokenTimelock = artifacts.require('./TokenTimelock.sol');
 
 
 module.exports = async (deployer) => {

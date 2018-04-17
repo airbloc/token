@@ -1,28 +1,36 @@
-const ABLG = artifacts.require("./ABLG.sol");
+const ABLG = artifacts.require("ABLG");
+const BigNumber = web3.BigNumber;
 
+require('chai')
+  .use(require('chai-as-promised'))
+  .use(require('chai-bignumber')(BigNumber))
+  .should();
 
-contract("Airbloc Genesis Token", async (accounts) => {
+contract("Airbloc Genesis Token", function ([_, test]) {
     let ablgi;
-    const test = accounts[0];
     const amount = 10;
 
-    beforeEach(async() => {
+    const _name = 'Airbloc Genesis Token';
+    const _symbol = 'ABLG';
+    const _decimals = 18;
+
+    before(async() => {
         ablgi = await ABLG.new();
     })
 
     it('has a name', async () => {
         const name = await ablgi.name();
-        assert.equal(name, 'Airbloc Genesis Token');
+        name.should.be.equal(_name);
     });
 
     it('has a symbol', async () => {
         const symbol = await ablgi.symbol();
-        assert.equal(symbol, 'ABLG');
+        symbol.should.be.equal(_symbol);
     });
 
     it('has 18 decimals', async () => {
         const decimals = await ablgi.decimals();
-        assert(decimals.eq(18));
+        decimals.should.be.bignumber.equal(_decimals);
     });
 
     // Mint
@@ -35,14 +43,14 @@ contract("Airbloc Genesis Token", async (accounts) => {
         const afterBalance = await ablgi.balanceOf(test);
         const afterTotalSupply = await ablgi.totalSupply();
 
-        assert.equal(afterBalance - beforeBalance, amount, 'there are some problems in minting process');
-        assert.equal(afterTotalSupply - beforeTotalSupply, amount, 'there are some problems in minting process')
+        const balanceGap = afterBalance - beforeBalance;
+        balanceGap.should.be.equal(amount, 'there are some problems in minting process');
+        const supplyGap = afterTotalSupply - beforeTotalSupply;
+        supplyGap.should.be.equal(amount, 'there are some problems in minting process');
     });
 
     // Burn
     it("should burn correctly", async() => {
-        await ablgi.mint(test, amount);
-
         const beforeBalance = await ablgi.balanceOf(test);
         const beforeTotalSupply = await ablgi.totalSupply();
 
@@ -51,7 +59,9 @@ contract("Airbloc Genesis Token", async (accounts) => {
         const afterBalance = await ablgi.balanceOf(test);
         const afterTotalSupply = await ablgi.totalSupply();
 
-        assert.equal(beforeBalance - afterBalance, amount, 'there are some problems in burning process');
-        assert.equal(beforeTotalSupply - afterTotalSupply, amount, 'there are some problems in burning process')
+        const balanceGap = beforeBalance - afterBalance;
+        balanceGap.should.be.equal(amount, 'there are some problems in burning process');
+        const supplyGap = beforeTotalSupply - afterTotalSupply;
+        supplyGap.should.be.equal(amount, 'there are some problems in burning process');
     });
 })
