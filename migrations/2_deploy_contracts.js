@@ -1,11 +1,9 @@
-var AirblocToken = artifacts.require("./AirblocToken.sol");
+const ABL = artifacts.require('./ABL.sol');
+const ABLG = artifacts.require('./ABLG.sol');
+const ABLGExchanger = artifacts.require('./ABLGExchanger.sol');
+const TokenTimelock = artifacts.require('./TokenTimelock.sol');
 
-module.exports = function(deployer) {
-    const PVT = web3.eth.accounts[26];
-    const PRE = web3.eth.accounts[27];
-    const PUB = web3.eth.accounts[28];
-    const DEV = web3.eth.accounts[29];
 
-    deployer.deploy(AirblocToken, PVT, PRE, PUB, DEV);
-    
+module.exports = async (deployer) => {
+
 }

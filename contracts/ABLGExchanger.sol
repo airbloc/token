@@ -1,15 +1,14 @@
 pragma solidity ^0.4.19;
 
-import "zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
-import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
-import "./Whitelist.sol";
+import "./zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "./zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "./zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./zeppelin-solidity/contracts/ownership/Whitelist.sol";
 import "./TokenTimelock.sol";
-import "./AirblocToken.sol";
+import "./ABL.sol";
 
 
-contract PrivateSale is Ownable, Whitelist {
+contract ABLGExchanger is Whitelist {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
@@ -22,16 +21,16 @@ contract PrivateSale is Ownable, Whitelist {
     ERC20 public atoken;
     ERC20 public gtoken;
 
-    function PrivateSale(ERC20 _atoken, address _gtoken, address _origin) public {
-        require(_gtoken != 0x0);
+    function ABLGExchanger(ERC20 _atoken, ERC20 _gtoken, address _origin) public {
+        /* require(_gtoken != 0x0); */
         require(_origin != 0x0);
 
         origin = _origin;
         atoken = _atoken;
-        gtoken = ERC20(_gtoken);
+        gtoken = _gtoken;
     }
 
-    function swap() public isWhitelisted {
+    function swap() public onlyWhitelisted returns(address) {
         uint256 amount = gtoken.balanceOf(msg.sender);
 
         require(amount != 0);
@@ -47,7 +46,7 @@ contract PrivateSale is Ownable, Whitelist {
 
         // Lock 30 percent of given bonus
         if(lockList[msg.sender] == 0x0) {
-            TokenTimelock lockContract = new TokenTimelock(AirblocToken(atoken), owner, msg.sender, block.timestamp + 1 years);
+            TokenTimelock lockContract = new TokenTimelock(ABL(atoken), owner, msg.sender, block.timestamp + 1 years);
             lockList[msg.sender] = address(lockContract);
         }
 
@@ -55,5 +54,9 @@ contract PrivateSale is Ownable, Whitelist {
 
         // Send sedner's ABGL Tokens to origin
         gtoken.safeTransferFrom(msg.sender, origin, amount);
+
+        return lockList[msg.sender];
     }
+
+    // TODO : Bulk release
 }
