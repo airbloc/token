@@ -12,5 +12,5 @@ contract('Airbloc Genesis Token Exchanger', function ([_, dtb, dev, test]) {
         this.exchanger = await ABLGE.new(this.abl.address, this.ablg.address, dtb);
     })
 
-    
+
 })

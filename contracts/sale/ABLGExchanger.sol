@@ -3,10 +3,11 @@ pragma solidity ^0.4.19;
 import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "../zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "../zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../util/TokenTimelock.sol";
 
 
-contract ABLGExchanger {
+contract ABLGExchanger is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 

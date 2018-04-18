@@ -38,10 +38,23 @@ contract ABL is StandardToken, OwnableToken {
         emit Transfer(address(0), dev, DEVELOPERS);
     }
 
-    // Ownable 컨트랙트 따로 하나 더 만들기
-    // Mint
-    event Mint(address indexed to, uint256 amount);
+/////////////////////////
+//  override transfer  //
+/////////////////////////
+    bool lock = true;
 
+    modifier locked() {
+        require(!lock);
+        _;
+    }
+
+    function transfer(address _to, uint256 _value) public locked returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+//////////////////////
+//  mint and burn   //
+//////////////////////
     function mint(
         address _to,
         uint256 _amount
@@ -56,8 +69,6 @@ contract ABL is StandardToken, OwnableToken {
         return true;
     }
 
-    // Burn
-    event Burn(address indexed from, uint256 amount);
 
     function burn(
         uint256 _amount
@@ -71,4 +82,8 @@ contract ABL is StandardToken, OwnableToken {
         emit Burn(from, _amount);
         emit Transfer(from, address(0), _amount);
     }
+
+    event Mint(address indexed to, uint256 amount);
+
+    event Burn(address indexed from, uint256 amount);
 }

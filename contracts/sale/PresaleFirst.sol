@@ -26,7 +26,6 @@ contract PresaleFirst is Whitelist, Pausable {
 
     uint256 public startTime;
     uint256 public endTime;
-    uint256 public releaseTime;
     uint256 public maxcap;
     uint256 public exceed;
     uint256 public mininum;
@@ -37,29 +36,27 @@ contract PresaleFirst is Whitelist, Pausable {
     function PresaleFirst (
         uint256 _startTime,
         uint256 _endTime,
-        uint256 _releaseTime,
         uint256 _maxcap,
         uint256 _exceed,
         uint256 _mininum,
         address _wallet,
-        ERC20 _token,
+        address _token,
         uint256 _rate
         ) public {
         require(_wallet != address(0));
-        require(_token != ERC20(0));
+        require(_token != address(0));
 
         startTime = _startTime;
         endTime = _endTime;
-        releaseTime = _releaseTime;
         maxcap = _maxcap;
         exceed = _exceed;
         mininum = _mininum;
         wallet = _wallet;
-        token = _token;
-        rate = rate;
+        token = ERC20(_token);
+        rate = _rate;
     }
 
-    function preValidation() private constant returns (bool) {
+    function preValidation() private returns (bool) {
         // softcap, hardcap
         uint256 amount = msg.value;
         bool a = amount >= mininum && amount <= exceed;
@@ -71,14 +68,14 @@ contract PresaleFirst is Whitelist, Pausable {
         return a || b;
     }
 
-    function getTokenAmount(address buyer) private constant returns (uint256, uint256) {
+    function getTokenAmount(address _buyer) private returns (uint256, uint256) {
         uint256 cAmount = msg.value;
         uint256 bAmount = 0;
         uint256 pAmount = 0;
 
         // get exist amount
-        if(buyers[buyer].Lock != address(0)) {
-            bAmount = buyers[buyer].Amount;
+        if(buyers[_buyer].Lock != address(0)) {
+            bAmount = buyers[_buyer].Amount;
             require(bAmount < exceed);
         }
 
@@ -97,43 +94,33 @@ contract PresaleFirst is Whitelist, Pausable {
         return (cAmount.sub(pAmount), pAmount);
     }
 
-    function () public payable onlyWhitelisted {
+    function () external payable {
         buyToken(msg.sender);
     }
 
-    function buyToken(address buyer) public payable onlyWhitelisted whenNotPaused {
-        require(buyer != address(0));
+    function buyToken(address _buyer) public payable onlyWhitelisted whenNotPaused {
+        require(_buyer != address(0));
 
         require(preValidation());
 
         uint256 refund;
         uint256 purchase;
 
-        (refund, purchase) = getTokenAmount(buyer);
+        (refund, purchase) = getTokenAmount(_buyer);
+        emit TokenAmount(_buyer, refund, purchase);
 
         // refund
-        buyer.transfer(refund);
+        _buyer.transfer(refund);
 
         // buy
         uint256 tokenAmount = purchase.div(10000000000000000).mul(rate);
         maxcap = maxcap.sub(purchase);
 
-        if(buyers[buyer].Lock == address(0)) {
-            TokenTimelock lock = new TokenTimelock(ABL(token), owner, buyer, releaseTime);
-            buyers[buyer].Lock = address(lock);
-        }
-
         wallet.transfer(purchase);
-        token.transferFrom(wallet, buyers[buyer].Lock, tokenAmount);
-        emit BuyToken(wallet, buyer, purchase, tokenAmount);
+        token.transferFrom(wallet, buyers[_buyer].Lock, tokenAmount);
+        emit BuyToken(wallet, _buyer, purchase, tokenAmount);
     }
 
-    function bulkRelease() public onlyOwner {
-        for(uint256 i = 0; i < keys.length; i++) {
-            TokenTimelock lockContract = TokenTimelock(buyers[keys[i]].Lock);
-            lockContract.release();
-        }
-
-        emit BulkRelease(owner, keys);
-    }
+    event PreValidationPassed(address buyer, uint256 amount, uint256 time);
+    event TokenAmount(address buyer, uint256 refund, uint256 purchase);
 }

@@ -16,6 +16,7 @@ contract('Airbloc Token', function ([_, dtb, dev, test]) {
 
     before(async () => {
         abli = await ABL.new(dtb, dev);
+        await abli.addOwner(dtb);
     })
 
     // Token Options
