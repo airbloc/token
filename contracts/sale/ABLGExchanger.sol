@@ -29,6 +29,21 @@ contract ABLGExchanger {
         ABLG = ERC20(_ablg);
     }
 
+//////////////////
+//  once
+//////////////////
+
+    bool once = false;
+
+    modifier onlyOnce() {
+        require(!once);
+        _;
+    }
+
+//////////////////
+//  distribute
+//////////////////
+
     function distribute() public onlyOwner onlyOnce {
         once = true;
 
@@ -65,13 +80,6 @@ contract ABLGExchanger {
             TokenTimelock lock = TokenTimelock(lockList[keys[i]]);
             lock.release();
         }
-    }
-
-    bool once = false;
-
-    modifier onlyOnce() {
-        require(!once);
-        _;
     }
 
     event Distribute(address indexed owner, address indexed beneficiary, uint256 amount);
