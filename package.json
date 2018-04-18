@@ -1,7 +1,7 @@
 {
     "name": "token",
-    "version": "1.0.0",
-    "description": "This is contract of airbloc token.",
+    "version": "0.1.0",
+    "description": "This is contract of Airbloc token.",
     "main": "truffle-config.js",
     "directories": {
         "test": "test"
@@ -16,15 +16,15 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/frostornge/token.git"
+        "url": "git+https://github.com/airbloc/token.git"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/frostornge/token/issues"
+        "url": "https://github.com/airbloc/token/issues"
     },
-    "homepage": "https://github.com/frostornge/token#readme",
+    "homepage": "https://github.com/airbloc/token#readme",
     "dependencies": {},
     "devDependencies": {
         "babel-polyfill": "^6.26.0",
