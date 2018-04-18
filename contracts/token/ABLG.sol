@@ -1,8 +1,8 @@
 pragma solidity ^0.4.19;
 
-import "./zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "./zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../zeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 contract ABLG is StandardToken, Ownable {
@@ -22,7 +22,7 @@ contract ABLG is StandardToken, Ownable {
         address _to,
         uint256 _amount
         ) onlyOwner public returns (bool) {
-        require(_to != 0x0);
+        require(_to != address(0));
         require(_amount >= 0);
 
         totalSupply = totalSupply.add(_amount);

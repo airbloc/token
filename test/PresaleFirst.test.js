@@ -20,8 +20,9 @@ contract('First Presale', function ([_, owner, buyer, fraud]) {
 
         this.maxcap = web3.toWei('1500', 'ether');
         this.exceed = web3.toWei('300', 'ether');
+        this.mininum = web3.toWei('0.5', 'ether');
         this.token = await MintableToken.new({ from: owner });
-        this.rate = 11500;
+        this.rate = 115;
 
         this.presale = await PresaleFirst.new(
             // time

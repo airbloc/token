@@ -1,7 +1,7 @@
 pragma solidity ^0.4.19;
 
-import "./zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "./zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "../zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
 contract TokenTimelock is Ownable {
@@ -11,12 +11,12 @@ contract TokenTimelock is Ownable {
     address public buyer;
     uint256 public releaseTime;
 
-    function TokenTimelock(ERC20Basic _token, address _owner, address _buyer, uint256 _releaseTime) public {
-        require(_releaseTime > block.timestamp);
+    function TokenTimelock(address _token, address _owner, address _buyer, uint256 _after) public {
+        require(_token != address(0));
         token = _token;
         buyer = _buyer;
         transferOwnership(_owner);
-        releaseTime = _releaseTime;
+        releaseTime = block.timestamp + _after;
     }
 
     function release() public {

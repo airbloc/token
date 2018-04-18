@@ -1,10 +1,10 @@
 pragma solidity ^0.4.19;
 
-import "./zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
-import "./zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../util/OwnableToken.sol";
 
 
-contract ABL is StandardToken, Ownable {
+contract ABL is StandardToken, OwnableToken {
     // Wallet
     address private dtb;    // distribution
     address private dev;    // developer
@@ -24,20 +24,21 @@ contract ABL is StandardToken, Ownable {
         address _dtb,
         address _dev
         ) public {
-        require(_dtb != 0x0);
-        require(_dev != 0x0);
+        require(_dtb != address(0));
+        require(_dev != address(0));
         require(DISTRIBUTION + DEVELOPERS == SUM);
 
         dtb = _dtb;
         dev = _dev;
 
         balances[dtb] = DISTRIBUTION;
-        emit Transfer(0x0, dtb, DISTRIBUTION);
+        emit Transfer(address(0), dtb, DISTRIBUTION);
 
         balances[dev] = DEVELOPERS;
-        emit Transfer(0x0, dev, DEVELOPERS);
+        emit Transfer(address(0), dev, DEVELOPERS);
     }
 
+    // Ownable 컨트랙트 따로 하나 더 만들기
     // Mint
     event Mint(address indexed to, uint256 amount);
 
@@ -45,7 +46,7 @@ contract ABL is StandardToken, Ownable {
         address _to,
         uint256 _amount
         ) onlyOwner public returns (bool) {
-        require(_to != 0x0);
+        require(_to != address(0));
         require(_amount >= 0);
 
         totalSupply = totalSupply.add(_amount);
