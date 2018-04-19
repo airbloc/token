@@ -41,7 +41,7 @@ contract ABL is StandardToken, OwnableToken {
 /////////////////////////
 //  override transfer  //
 /////////////////////////
-    bool isLocked = false;
+    bool isLocked = true;
 
     modifier locked() {
         require(!isLocked);
