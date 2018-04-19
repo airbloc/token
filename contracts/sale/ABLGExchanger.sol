@@ -1,31 +1,25 @@
 pragma solidity ^0.4.19;
 
-import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "../zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "../zeppelin-solidity/contracts/math/SafeMath.sol";
-import "../zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "../util/TokenTimelock.sol";
+import "../zeppelin/token/ERC20/ERC20.sol";
+import "../zeppelin/math/SafeMath.sol";
+import "../zeppelin/ownership/Ownable.sol";
+import "../util/OwnedTokenTimelock.sol";
 
 
 contract ABLGExchanger is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
-    address public wallet;
-
     ERC20 public ABL;
     ERC20 public ABLG;
 
     function ABLGExchanger(
         address _abl,
-        address _ablg,
-        address _wallet
+        address _ablg
         ) public {
         require(_abl != address(0));
         require(_ablg != address(0));
-        require(_wallet != address(0));
 
-        wallet = _wallet;
         ABL = ERC20(_abl);
         ABLG = ERC20(_ablg);
     }
@@ -45,40 +39,44 @@ contract ABLGExchanger is Ownable {
 //  distribute
 //////////////////
 
+    function calcAmount(address key) private constant returns (uint256, uint256) {
+        /* require(holder[key] != 0);
+        require(ABL.balanceOf(this).sub(holder[key]) > 0); */
+
+        return(holder[key].div(29).mul(23), holder[key].div(29).mul(6));
+    }
+
     function distribute() public onlyOwner onlyOnce {
+        /* require(ABL.balanceOf(this) > 0); */
         once = true;
 
         for(uint256 i = 0; i < keys.length; i++) {
             address key = keys[i];
 
-            uint256 amount = ABLG.balanceOf(key);
+            uint256 samount;
+            uint256 lamount;
 
-            require(amount != 0);
-            require(ABL.balanceOf(wallet).sub(amount) > 0);
+            (samount, lamount) = calcAmount(key);
 
-            // Safe Amount
-            uint256 samount = amount.div(29).mul(23);
-            // Lock Amount
-            uint256 lamount = amount.div(29).mul(6);
+            emit LogUint(samount);
+            emit LogUint(lamount);
 
             // Send owner's ABL Tokens to msg.sender
-            ABL.safeTransferFrom(wallet, key, samount);
+            ABL.safeTransfer(key, samount);
 
             // Lock 30 percent of given bonus
-            if(lockList[key] == address(0)) {
-                TokenTimelock lockContract = new TokenTimelock(address(ABL), owner, key, 1 years);
-                lockList[key] = address(lockContract);
-            }
+            OwnedTokenTimelock lockContract = new OwnedTokenTimelock(address(ABL), owner, key, 1 years);
+            lockList[key] = address(lockContract);
 
-            ABL.safeTransferFrom(wallet, lockList[key], lamount);
+            ABL.safeTransfer(key, lamount);
 
-            emit Distribute(wallet, msg.sender, amount);
+            emit Distribute(this, key, holder[key]);
         }
     }
 
     function bulkRelease() public onlyOwner onlyOnce {
         for(uint256 i = 0; i < keys.length; i++) {
-            TokenTimelock lock = TokenTimelock(lockList[keys[i]]);
+            OwnedTokenTimelock lock = OwnedTokenTimelock(lockList[keys[i]]);
             lock.release();
         }
     }
@@ -104,21 +102,23 @@ contract ABLGExchanger is Ownable {
         return (lockList[_holder], holder[_holder]);
     }
 
-    function addHolder(address _holder, uint256 _amount) public onlyOwner {
-        require(_holder != address(0));
-        require(_amount > 0);
+    function addHolder(address _holder) public onlyOwner {
+        uint256 amount = ABLG.balanceOf(_holder);
 
-        holder[_holder] = _amount;
+        require(_holder != address(0));
+        require(amount > 0);
+
+        holder[_holder] = amount;
         keys.push(_holder);
 
-        emit AddHolder(_holder, _amount);
+        emit AddHolder(_holder, amount);
     }
 
-    function addHolders(address[] _holders, uint256[] _amounts) public onlyOwner {
-        require(_holders.length == _amounts.length);
+    function addHolders(address[] _holders) public onlyOwner {
+        require(_holders.length != 0);
 
         for(uint256 i = 0; i < _holders.length; i++) {
-            addHolder(_holders[i], _amounts[i]);
+            addHolder(_holders[i]);
         }
     }
 
@@ -140,7 +140,13 @@ contract ABLGExchanger is Ownable {
         }
     }
 
-    event AddHolder(address indexed holder, uint256 amount);
+//////////////////
+//  events
+//////////////////
 
-    event RemoveHolder(address indexed holder, uint256 index);
+    event LogAddress(address msg);
+    event LogString(string msg);
+    event LogUint(uint256 msg);
+    event AddHolder(address holder, uint256 amount);
+    event RemoveHolder(address holder, uint256 index);
 }

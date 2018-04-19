@@ -7,7 +7,7 @@ jobs:
       - image: trufflesuite/ganache-cli
         command: |
           -a 50
-          -e 500
+          -e 1000000
 
     working_directory: ~/token
 

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "../zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../zeppelin/token/ERC20/StandardToken.sol";
 import "../util/OwnableToken.sol";
 
 
@@ -10,9 +10,9 @@ contract ABL is StandardToken, OwnableToken {
     address private dev;    // developer
 
     // Token Distribution Rate
-    uint256 public constant SUM = 100;   // totalSupply
-    uint256 public constant DISTRIBUTION = 50; // distribution
-    uint256 public constant DEVELOPERS = 50;   // developer
+    uint256 public constant SUM = 400000000;   // totalSupply
+    uint256 public constant DISTRIBUTION = 221450000; // distribution
+    uint256 public constant DEVELOPERS = 178550000;   // developer
 
     // Token Information
     string public name = "Airbloc Token";
@@ -41,11 +41,19 @@ contract ABL is StandardToken, OwnableToken {
 /////////////////////////
 //  override transfer  //
 /////////////////////////
-    bool lock = true;
+    bool isLocked = true;
 
     modifier locked() {
-        require(!lock);
+        require(!isLocked);
         _;
+    }
+
+    function unlock() public onlyOwner {
+        isLocked = false;
+    }
+
+    function lock() public onlyOwner {
+        isLocked = true;
     }
 
     function transfer(address _to, uint256 _value) public locked returns (bool) {
@@ -68,7 +76,6 @@ contract ABL is StandardToken, OwnableToken {
         emit Transfer(address(0), _to, _amount);
         return true;
     }
-
 
     function burn(
         uint256 _amount
