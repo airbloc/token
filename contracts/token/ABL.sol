@@ -48,11 +48,11 @@ contract ABL is StandardToken, OwnableToken {
         _;
     }
 
-    function unlock() onlyOwner {
+    function unlock() public onlyOwner {
         isLocked = false;
     }
 
-    function lock() onlyOwner {
+    function lock() public onlyOwner {
         isLocked = true;
     }
 

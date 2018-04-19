@@ -81,8 +81,8 @@ contract PresaleFirst is Whitelist, Pausable {
 
         // wallet
         wallet.transfer(purchase);
-        buyers[_buyer].FundAmount += purchase;
-        buyers[_buyer].TokenAmount += tokenAmount;
+        buyers[_buyer].FundAmount = buyers[_buyer].FundAmount.add(purchase);
+        buyers[_buyer].TokenAmount = buyers[_buyer].TokenAmount.add(tokenAmount);
         emit BuyToken(_buyer, purchase, tokenAmount);
     }
 
@@ -92,7 +92,7 @@ contract PresaleFirst is Whitelist, Pausable {
 
     function preValidation() private constant returns (bool) {
         // check minimum
-        bool a = msg.value > minimum;
+        bool a = msg.value >= minimum;
 
         // sale duration
         uint256 time = block.timestamp;
@@ -161,6 +161,8 @@ contract PresaleFirst is Whitelist, Pausable {
             emit Release(keys[i], buyers[keys[i]].TokenAmount);
         }
     }
+
+    // TODO : withdraw 만들기
 
 //////////////////
 //  events
