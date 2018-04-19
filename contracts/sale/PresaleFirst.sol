@@ -1,34 +1,22 @@
 pragma solidity ^0.4.19;
 
-import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "../zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "../zeppelin-solidity/contracts/math/SafeMath.sol";
-import "../zeppelin-solidity/contracts/ownership/Whitelist.sol";
-import "../zeppelin-solidity/contracts/lifecycle/Pausable.sol";
+import "../zeppelin/token/ERC20/ERC20.sol";
+import "../zeppelin/token/ERC20/SafeERC20.sol";
+import "../zeppelin/math/SafeMath.sol";
+import "../zeppelin/ownership/Whitelist.sol";
+import "../zeppelin/lifecycle/Pausable.sol";
 import "../token/ABL.sol";
-import "../util/TokenTimelock.sol";
 
 
 contract PresaleFirst is Whitelist, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
-    event BuyToken(address wallet, address indexed buyer, uint256 price, uint256 tokens);
-    event BulkRelease(address owner, address[] keys);
-
-    struct Buyer {
-        address Lock;
-        uint256 Amount;
-    }
-
-    mapping (address => Buyer) public buyers;
-    address[] public keys;
-
     uint256 public startTime;
     uint256 public endTime;
     uint256 public maxcap;
     uint256 public exceed;
-    uint256 public mininum;
+    uint256 public minimum;
     uint256 public rate;
     address public wallet;
     ERC20 public token;
@@ -38,7 +26,7 @@ contract PresaleFirst is Whitelist, Pausable {
         uint256 _endTime,
         uint256 _maxcap,
         uint256 _exceed,
-        uint256 _mininum,
+        uint256 _minimum,
         address _wallet,
         address _token,
         uint256 _rate
@@ -50,55 +38,30 @@ contract PresaleFirst is Whitelist, Pausable {
         endTime = _endTime;
         maxcap = _maxcap;
         exceed = _exceed;
-        mininum = _mininum;
+        minimum = _minimum;
         wallet = _wallet;
         token = ERC20(_token);
         rate = _rate;
     }
 
-    function preValidation() private returns (bool) {
-        // softcap, hardcap
-        uint256 amount = msg.value;
-        bool a = amount >= mininum && amount <= exceed;
+//////////////////
+//  collect eth
+//////////////////
 
-        // sale duration
-        uint256 time = block.timestamp;
-        bool b = time > startTime && time < endTime;
-
-        return a || b;
+    struct Buyer {
+        uint256 FundAmount;
+        uint256 TokenAmount;
     }
 
-    function getTokenAmount(address _buyer) private returns (uint256, uint256) {
-        uint256 cAmount = msg.value;
-        uint256 bAmount = 0;
-        uint256 pAmount = 0;
+    mapping (address => Buyer) public buyers;
+    address[] public keys;
 
-        // get exist amount
-        if(buyers[_buyer].Lock != address(0)) {
-            bAmount = buyers[_buyer].Amount;
-            require(bAmount < exceed);
-        }
 
-        // 1. check indivisual hardcap
-        if(cAmount.add(bAmount) > exceed) {
-            pAmount = exceed.sub(bAmount);
-        } else {
-            pAmount = cAmount;
-        }
-
-        // 2. check sale hardcap
-        if(pAmount >= maxcap) {
-            pAmount = maxcap;
-        }
-
-        return (cAmount.sub(pAmount), pAmount);
+    function () public payable {
+        collect(msg.sender);
     }
 
-    function () external payable {
-        buyToken(msg.sender);
-    }
-
-    function buyToken(address _buyer) public payable onlyWhitelisted whenNotPaused {
+    function collect(address _buyer) public payable onlyWhitelisted whenNotPaused {
         require(_buyer != address(0));
 
         require(preValidation());
@@ -116,11 +79,97 @@ contract PresaleFirst is Whitelist, Pausable {
         uint256 tokenAmount = purchase.div(10000000000000000).mul(rate);
         maxcap = maxcap.sub(purchase);
 
+        // wallet
         wallet.transfer(purchase);
-        token.transferFrom(wallet, buyers[_buyer].Lock, tokenAmount);
-        emit BuyToken(wallet, _buyer, purchase, tokenAmount);
+        buyers[_buyer].FundAmount += purchase;
+        buyers[_buyer].TokenAmount += tokenAmount;
+        emit BuyToken(_buyer, purchase, tokenAmount);
     }
 
-    event PreValidationPassed(address buyer, uint256 amount, uint256 time);
+//////////////////
+//  validation functions for collect
+//////////////////
+
+    function preValidation() private constant returns (bool) {
+        // check minimum
+        bool a = msg.value > minimum;
+
+        // sale duration
+        uint256 time = block.timestamp;
+        bool b = time > startTime && time < endTime;
+
+        return a && b;
+    }
+
+    function getTokenAmount(address _buyer) private returns (uint256, uint256) {
+        uint256 cAmount = msg.value;
+        uint256 bAmount = 0;
+        uint256 pAmount = 0;
+
+        // get exist amount
+        if(buyers[_buyer].FundAmount != 0) {
+            bAmount = buyers[_buyer].FundAmount;
+
+            if(bAmount >= exceed){
+                emit LogString("Buyer cannot purchase over exceed");
+                revert();
+            }
+        } else {
+            keys.push(_buyer);
+        }
+
+        if(cAmount >= exceed) {
+            pAmount = exceed;
+        }
+
+        // 1. check indivisual hardcap
+        if(cAmount.add(bAmount) > exceed) {
+            pAmount = exceed.sub(bAmount);
+        } else {
+            pAmount = cAmount;
+        }
+
+        // 2. check sale hardcap
+        if(pAmount >= maxcap) {
+            pAmount = maxcap;
+        }
+
+        return (cAmount.sub(pAmount), pAmount);
+    }
+
+//////////////////
+//  once
+//////////////////
+
+    bool once = false;
+
+    modifier onlyOnce() {
+        require(!once);
+        _;
+    }
+
+//////////////////
+//  release
+//////////////////
+
+    function release() public onlyOwner onlyOnce {
+        require(block.timestamp > endTime);
+        once = true;
+
+        for(uint256 i = 0; i < keys.length; i++) {
+            token.safeTransfer(keys[i], buyers[keys[i]].TokenAmount);
+            emit Release(keys[i], buyers[keys[i]].TokenAmount);
+        }
+    }
+
+//////////////////
+//  events
+//////////////////
+
+    event LogAddress(address msg);
+    event LogString(string msg);
+    event LogUint(uint256 msg);
     event TokenAmount(address buyer, uint256 refund, uint256 purchase);
+    event Release(address buyer, uint256 amount);
+    event BuyToken(address buyer, uint256 price, uint256 tokens);
 }

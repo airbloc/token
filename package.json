@@ -8,9 +8,10 @@
     },
     "scripts": {
         "lint": "solium --watch --dir contracts",
-        "ganache-run": "docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 50 -e 500",
+        "ganache-run": "docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 50 -e 1000000",
         "ganache-stop": "docker rm -f ganache",
-        "test": "npm run ganache-run; truffle test --disable-unused-var-warning; npm run ganache-stop",
+        "test": "npm run ganache-run; truffle test --show-events; npm run ganache-stop",
+        "debug": "npm run ganache-run; truffle debug; npm run ganache-stop",
         "migrate": "truffle migrate --reset",
         "console": "npm run ganache-run; npm run migrate; truffle console; npm run ganache-stop"
     },

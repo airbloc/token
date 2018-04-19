@@ -9,15 +9,15 @@ require('chai')
     .should();
 
 const MintableToken = artifacts.require('MintableToken');
-const TokenTimelock = artifacts.require('TokenTimelock');
+const OwnedTokenTimelock = artifacts.require('OwnedTokenTimelock');
 
-contract('TokenTimelock', function ([_, owner, beneficiary]) {
+contract('OwnedTokenTimelock', function ([_, owner, beneficiary]) {
     const amount = new BigNumber(100);
 
     beforeEach(async function () {
         this.token = await MintableToken.new({ from: owner });
         this.releaseTime = duration.years(1);
-        this.timelock = await TokenTimelock.new(this.token.address, owner, beneficiary, this.releaseTime);
+        this.timelock = await OwnedTokenTimelock.new(this.token.address, owner, beneficiary, this.releaseTime);
         await this.token.mint(this.timelock.address, amount, { from: owner });
     });
 

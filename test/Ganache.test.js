@@ -4,6 +4,6 @@ contract('Ganache-cli', async (accounts) => {
     });
 
     it('should give correctly amount of eth', async () => {
-        assert.equal(web3.eth.getBalance(accounts[1]).c, 5000000);
+        assert.equal(web3.eth.getBalance(accounts[1]).c, 10000000000);
     });
 })
