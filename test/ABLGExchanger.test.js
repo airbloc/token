@@ -17,10 +17,10 @@ contract('Airbloc Genesis Token Exchanger', function ([_, owner, buyer, buyer1, 
 
     const buyers = [
         buyer1,
-        buyer2,
-        buyer3,
-        buyer4,
-        buyer5
+        // buyer2,
+        // buyer3,
+        // buyer4,
+        // buyer5
     ];
 
     // big fucking amount

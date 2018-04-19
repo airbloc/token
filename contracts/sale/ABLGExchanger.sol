@@ -1,7 +1,6 @@
 pragma solidity ^0.4.19;
 
 import "../zeppelin/token/ERC20/ERC20.sol";
-import "../zeppelin/token/ERC20/SafeERC20.sol";
 import "../zeppelin/math/SafeMath.sol";
 import "../zeppelin/ownership/Ownable.sol";
 import "../util/OwnedTokenTimelock.sol";
@@ -41,14 +40,14 @@ contract ABLGExchanger is Ownable {
 //////////////////
 
     function calcAmount(address key) private constant returns (uint256, uint256) {
-        require(holder[key] != 0);
-        require(ABL.balanceOf(this).sub(holder[key]) > 0);
+        /* require(holder[key] != 0);
+        require(ABL.balanceOf(this).sub(holder[key]) > 0); */
 
         return(holder[key].div(29).mul(23), holder[key].div(29).mul(6));
     }
 
     function distribute() public onlyOwner onlyOnce {
-        require(ABL.balanceOf(this) > 0);
+        /* require(ABL.balanceOf(this) > 0); */
         once = true;
 
         for(uint256 i = 0; i < keys.length; i++) {
@@ -63,13 +62,13 @@ contract ABLGExchanger is Ownable {
             emit LogUint(lamount);
 
             // Send owner's ABL Tokens to msg.sender
-            /* ABL.safeTransfer(key, samount); */
+            ABL.safeTransfer(key, samount);
 
             // Lock 30 percent of given bonus
-            /* OwnedTokenTimelock lockContract = new OwnedTokenTimelock(address(ABL), owner, key, 1 years);
-            lockList[key] = address(lockContract); */
+            OwnedTokenTimelock lockContract = new OwnedTokenTimelock(address(ABL), owner, key, 1 years);
+            lockList[key] = address(lockContract);
 
-            /* ABL.safeTransfer(key, lamount); */
+            ABL.safeTransfer(key, lamount);
 
             emit Distribute(this, key, holder[key]);
         }

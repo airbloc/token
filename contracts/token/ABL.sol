@@ -41,11 +41,19 @@ contract ABL is StandardToken, OwnableToken {
 /////////////////////////
 //  override transfer  //
 /////////////////////////
-    bool lock = true;
+    bool isLocked = false;
 
     modifier locked() {
-        require(!lock);
+        require(!isLocked);
         _;
+    }
+
+    function unlock() onlyOwner {
+        isLocked = false;
+    }
+
+    function lock() onlyOwner {
+        isLocked = true;
     }
 
     function transfer(address _to, uint256 _value) public locked returns (bool) {
