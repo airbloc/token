@@ -33,6 +33,7 @@ contract('Airbloc Genesis Token Exchanger', function ([_, owner, buyer, buyer1, 
         ablg = await ABLG.new({ from: owner });
         exchanger = await ABLGE.new(abl.address, ablg.address, { from: owner });
 
+        await abl.unlock({ from: owner });
         await abl.mint(exchanger.address, bfAmount, { from: owner });
         for (let b of buyers) {
             await ablg.mint(b, nmAmount, { from: owner });
