@@ -1,3 +1,5 @@
+import ether from './helpers/ether';
+
 const ABLG = artifacts.require("ABLG");
 const BigNumber = web3.BigNumber;
 
@@ -15,7 +17,7 @@ contract("Airbloc Genesis Token", function ([_, test]) {
     const _decimals = 18;
 
     before(async() => {
-        ablgi = await ABLG.new();
+        ablgi = await ABLG.new({ from: test });
     })
 
     it('has a name', async () => {
@@ -38,15 +40,15 @@ contract("Airbloc Genesis Token", function ([_, test]) {
         const beforeBalance = await ablgi.balanceOf(test);
         const beforeTotalSupply = await ablgi.totalSupply();
 
-        await ablgi.mint(test, amount);
+        await ablgi.mint(test, amount, { from: test });
 
         const afterBalance = await ablgi.balanceOf(test);
         const afterTotalSupply = await ablgi.totalSupply();
 
         const balanceGap = afterBalance - beforeBalance;
-        balanceGap.should.be.equal(amount, 'there are some problems in minting process');
+        balanceGap.should.be.bignumber.equal(ether(amount), 'there are some problems in minting process');
         const supplyGap = afterTotalSupply - beforeTotalSupply;
-        supplyGap.should.be.equal(amount, 'there are some problems in minting process');
+        supplyGap.should.be.bignumber.equal(ether(amount), 'there are some problems in minting process');
     });
 
     // Burn
@@ -60,8 +62,8 @@ contract("Airbloc Genesis Token", function ([_, test]) {
         const afterTotalSupply = await ablgi.totalSupply();
 
         const balanceGap = beforeBalance - afterBalance;
-        balanceGap.should.be.equal(amount, 'there are some problems in burning process');
+        balanceGap.should.be.bignumber.equal(ether(amount), 'there are some problems in burning process');
         const supplyGap = beforeTotalSupply - afterTotalSupply;
-        supplyGap.should.be.equal(amount, 'there are some problems in burning process');
+        supplyGap.should.be.bignumber.equal(ether(amount), 'there are some problems in burning process');
     });
 })

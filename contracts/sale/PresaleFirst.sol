@@ -1,10 +1,10 @@
 pragma solidity ^0.4.19;
 
-import "../zeppelin/token/ERC20/ERC20.sol";
-import "../zeppelin/token/ERC20/SafeERC20.sol";
-import "../zeppelin/math/SafeMath.sol";
-import "../zeppelin/ownership/Whitelist.sol";
-import "../zeppelin/lifecycle/Pausable.sol";
+import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "zeppelin-solidity/contracts/ownership/Whitelist.sol";
+import "zeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "../token/ABL.sol";
 
 
@@ -18,6 +18,8 @@ contract PresaleFirst is Whitelist, Pausable {
     uint256 public exceed;
     uint256 public minimum;
     uint256 public rate;
+
+    uint256 public weiRaised;
     address public wallet;
     ERC20 public token;
 
@@ -34,6 +36,11 @@ contract PresaleFirst is Whitelist, Pausable {
         require(_wallet != address(0));
         require(_token != address(0));
 
+        require(_maxcap == 1500 ether);
+        require(_exceed == 300 ether);
+        require(_minimum == 0.5 ether);
+        require(_rate == 11500);
+
         startTime = _startTime;
         endTime = _endTime;
         maxcap = _maxcap;
@@ -42,48 +49,43 @@ contract PresaleFirst is Whitelist, Pausable {
         wallet = _wallet;
         token = ERC20(_token);
         rate = _rate;
+        weiRaised = 0;
     }
 
 //////////////////
 //  collect eth
 //////////////////
+    mapping (address => uint256) public buyers;
+    address[] private keys;
 
-    struct Buyer {
-        uint256 FundAmount;
-        uint256 TokenAmount;
-    }
-
-    mapping (address => Buyer) public buyers;
-    address[] public keys;
-
-
-    function () public payable {
+    function () external payable {
         collect(msg.sender);
     }
 
     function collect(address _buyer) public payable onlyWhitelisted whenNotPaused {
         require(_buyer != address(0));
-
+        require(weiRaised <= maxcap);
         require(preValidation());
+        require(buyers[_buyer] < exceed);
 
-        uint256 refund;
-        uint256 purchase;
+        // get exist amount
+        if(buyers[_buyer] == 0) {
+            keys.push(_buyer);
+        }
 
-        (refund, purchase) = getTokenAmount(_buyer);
-        emit TokenAmount(_buyer, refund, purchase);
+        uint256 purchase = getPurchaseAmount(_buyer);
+        uint256 refund = msg.value.sub(purchase);
 
         // refund
         _buyer.transfer(refund);
 
         // buy
-        uint256 tokenAmount = purchase.div(10000000000000000).mul(rate);
+        uint256 tokenAmount = purchase.mul(rate);
         maxcap = maxcap.sub(purchase);
 
         // wallet
-        wallet.transfer(purchase);
-        buyers[_buyer].FundAmount = buyers[_buyer].FundAmount.add(purchase);
-        buyers[_buyer].TokenAmount = buyers[_buyer].TokenAmount.add(tokenAmount);
-        emit BuyToken(_buyer, purchase, tokenAmount);
+        buyers[_buyer] = buyers[_buyer].add(purchase);
+        emit BuyTokens(_buyer, purchase, tokenAmount);
     }
 
 //////////////////
@@ -101,40 +103,28 @@ contract PresaleFirst is Whitelist, Pausable {
         return a && b;
     }
 
-    function getTokenAmount(address _buyer) private returns (uint256, uint256) {
-        uint256 cAmount = msg.value;
-        uint256 bAmount = 0;
-        uint256 pAmount = 0;
+    function getPurchaseAmount(address _buyer) private constant returns (uint256) {
+        return checkOverMaxcap(checkOverExceed(_buyer));
+    }
 
-        // get exist amount
-        if(buyers[_buyer].FundAmount != 0) {
-            bAmount = buyers[_buyer].FundAmount;
-
-            if(bAmount >= exceed){
-                emit LogString("Buyer cannot purchase over exceed");
-                revert();
-            }
+    // 1. check over exceed
+    function checkOverExceed(address _buyer) private constant returns (uint256) {
+        if(msg.value >= exceed) {
+            return exceed;
+        } else if(msg.value.add(buyers[_buyer]) > exceed) {
+            return exceed.sub(buyers[_buyer]);
         } else {
-            keys.push(_buyer);
+            return msg.value;
         }
+    }
 
-        if(cAmount >= exceed) {
-            pAmount = exceed;
-        }
-
-        // 1. check indivisual hardcap
-        if(cAmount.add(bAmount) > exceed) {
-            pAmount = exceed.sub(bAmount);
+    // 2. check sale hardcap
+    function checkOverMaxcap(uint256 amount) private constant returns (uint256) {
+        if((amount + weiRaised) >= maxcap) {
+            return (maxcap.sub(weiRaised));
         } else {
-            pAmount = cAmount;
+            return amount;
         }
-
-        // 2. check sale hardcap
-        if(pAmount >= maxcap) {
-            pAmount = maxcap;
-        }
-
-        return (cAmount.sub(pAmount), pAmount);
     }
 
 //////////////////
@@ -152,26 +142,38 @@ contract PresaleFirst is Whitelist, Pausable {
 //  release
 //////////////////
 
-    function release() public onlyOwner onlyOnce {
+    // TODO : change block.timestamp to number
+    function release() external onlyOwner onlyOnce {
         require(block.timestamp > endTime);
         once = true;
 
+        wallet.transfer(address(this).balance);
+
         for(uint256 i = 0; i < keys.length; i++) {
-            token.safeTransfer(keys[i], buyers[keys[i]].TokenAmount);
-            emit Release(keys[i], buyers[keys[i]].TokenAmount);
+            token.safeTransfer(keys[i], buyers[keys[i]].mul(rate));
+            emit Release(keys[i], buyers[keys[i]].mul(rate));
         }
     }
 
     // TODO : withdraw 만들기
+    function withdraw() external onlyOwner {
+        token.safeTransfer(wallet, token.balanceOf(this));
+        emit Withdraw(wallet, token.balanceOf(this));
+    }
+
+    function refund() external onlyOwner {
+        for(uint256 i = 0; i < keys.length; i++) {
+            keys[i].transfer(buyers[keys[i]]);
+            emit Refund(keys[i], buyers[keys[i]].mul(rate));
+        }
+    }
 
 //////////////////
 //  events
 //////////////////
 
-    event LogAddress(address msg);
-    event LogString(string msg);
-    event LogUint(uint256 msg);
-    event TokenAmount(address buyer, uint256 refund, uint256 purchase);
-    event Release(address buyer, uint256 amount);
-    event BuyToken(address buyer, uint256 price, uint256 tokens);
+    event Release(address indexed _to, uint256 _amount);
+    event Withdraw(address indexed _from, uint256 _amount);
+    event Refund(address indexed _to, uint256 _amount);
+    event BuyTokens(address indexed buyer, uint256 price, uint256 tokens);
 }

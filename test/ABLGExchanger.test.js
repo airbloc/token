@@ -1,3 +1,5 @@
+import ether from './helpers/ether';
+
 const BigNumber = web3.BigNumber;
 
 require('chai')
@@ -17,10 +19,10 @@ contract('Airbloc Genesis Token Exchanger', function ([_, owner, buyer, buyer1, 
 
     const buyers = [
         buyer1,
-        // buyer2,
-        // buyer3,
-        // buyer4,
-        // buyer5
+        buyer2,
+        buyer3,
+        buyer4,
+        buyer5
     ];
 
     // big fucking amount
@@ -56,6 +58,7 @@ contract('Airbloc Genesis Token Exchanger', function ([_, owner, buyer, buyer1, 
             await exchanger.distribute({ from: owner }).should.be.fulfilled;
             for (let b of buyers) {
                 const balance = await abl.balanceOf(b);
+                balance.should.be.bignumber.equal(ether(nmAmount));
             }
         });
 
@@ -63,7 +66,7 @@ contract('Airbloc Genesis Token Exchanger', function ([_, owner, buyer, buyer1, 
             await exchanger.distribute({ from: owner }).should.be.fulfilled;
             for (let b of buyers) {
                 const balance = await ablg.balanceOf(b);
-                balance.should.be.bignumber.equal(nmAmount);
+                balance.should.be.bignumber.equal(ether(nmAmount));
             }
         });
 

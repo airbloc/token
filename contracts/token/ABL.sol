@@ -1,13 +1,12 @@
 pragma solidity ^0.4.19;
 
-import "../zeppelin/token/ERC20/StandardToken.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../util/OwnableToken.sol";
 
 
 contract ABL is StandardToken, OwnableToken {
-    // Wallet
-    address private dtb;    // distribution
-    address private dev;    // developer
+    using SafeMath for uint256;
 
     // Token Distribution Rate
     uint256 public constant SUM = 400000000;   // totalSupply
@@ -28,14 +27,11 @@ contract ABL is StandardToken, OwnableToken {
         require(_dev != address(0));
         require(DISTRIBUTION + DEVELOPERS == SUM);
 
-        dtb = _dtb;
-        dev = _dev;
+        balances[_dtb] = DISTRIBUTION.mul(10 ** uint256(decimals));
+        emit Transfer(address(0), _dtb, balances[_dtb]);
 
-        balances[dtb] = DISTRIBUTION;
-        emit Transfer(address(0), dtb, DISTRIBUTION);
-
-        balances[dev] = DEVELOPERS;
-        emit Transfer(address(0), dev, DEVELOPERS);
+        balances[_dev] = DEVELOPERS.mul(10 ** uint256(decimals));
+        emit Transfer(address(0), _dev, balances[_dev]);
     }
 
 /////////////////////////
@@ -52,11 +48,15 @@ contract ABL is StandardToken, OwnableToken {
         isLocked = false;
     }
 
+/////////////////////////////////////////////
+//       should remove this only test      //
     function lock() public onlyOwner {
         isLocked = true;
     }
+/////////////////////////////////////////////
 
     function transfer(address _to, uint256 _value) public locked returns (bool) {
+        require(_to != address(this));
         return super.transfer(_to, _value);
     }
 
@@ -70,27 +70,30 @@ contract ABL is StandardToken, OwnableToken {
         require(_to != address(0));
         require(_amount >= 0);
 
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
+        uint256 amount = _amount.mul(10 ** uint256(decimals));
+
+        totalSupply = totalSupply.add(amount);
+        balances[_to] = balances[_to].add(amount);
+
+        emit Mint(_to, amount);
+        emit Transfer(address(0), _to, amount);
+
         return true;
     }
 
     function burn(
         uint256 _amount
         ) onlyOwner public {
-        address from = msg.sender;
         require(_amount >= 0);
-        require(_amount <= balances[from]);
+        require(_amount <= balances[msg.sender]);
 
-        totalSupply = totalSupply.sub(_amount);
-        balances[from] = balances[from].sub(_amount);
-        emit Burn(from, _amount);
-        emit Transfer(from, address(0), _amount);
+        totalSupply = totalSupply.sub(_amount.mul(10 ** uint256(decimals)));
+        balances[msg.sender] = balances[msg.sender].sub(_amount.mul(10 ** uint256(decimals)));
+
+        emit Burn(msg.sender, _amount.mul(10 ** uint256(decimals)));
+        emit Transfer(msg.sender, address(0), _amount.mul(10 ** uint256(decimals)));
     }
 
-    event Mint(address indexed to, uint256 amount);
-
-    event Burn(address indexed from, uint256 amount);
+    event Mint(address indexed _to, uint256 _amount);
+    event Burn(address indexed _from, uint256 _amount);
 }

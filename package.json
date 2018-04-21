@@ -10,9 +10,17 @@
         "lint": "solium --watch --dir contracts",
         "ganache-run": "docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 50 -e 1000000",
         "ganache-stop": "docker rm -f ganache",
+
+
         "test": "npm run ganache-run; truffle test --show-events; npm run ganache-stop",
-        "debug": "npm run ganache-run; truffle debug; npm run ganache-stop",
-        "migrate": "truffle migrate --reset",
+        "test:ropsten": "truffle test --network ropsten",
+        "test:rinkeby": "truffle test --network rinkeby",
+
+        "migrate": "truffle migrate --network development --reset",
+        "migrate:ropsten": "truffle migrate --network ropsten --reset",
+        "migrate:rinkeby": "truffle migrate --network rinkeby --reset",
+        "migrate:mainnet": "truffle migrate --network main --reset",
+
         "console": "npm run ganache-run; npm run migrate; truffle console; npm run ganache-stop"
     },
     "repository": {
@@ -26,7 +34,10 @@
         "url": "https://github.com/airbloc/token/issues"
     },
     "homepage": "https://github.com/airbloc/token#readme",
-    "dependencies": {},
+    "dependencies": {
+        "colors": "^1.2.1",
+        "zeppelin-solidity": "1.8.0"
+    },
     "devDependencies": {
         "babel-polyfill": "^6.26.0",
         "babel-preset-es2015": "^6.24.1",
@@ -36,6 +47,7 @@
         "chai": "^4.1.2",
         "chai-as-promised": "^7.1.1",
         "chai-bignumber": "^2.0.2",
-        "solium": "^1.1.6"
+        "solium": "^1.1.6",
+        "truffle-hdwallet-provider": "0.0.3"
     }
 }

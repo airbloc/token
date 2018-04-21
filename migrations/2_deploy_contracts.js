@@ -1,40 +1,80 @@
-const ETH = 1000000000000000000;
+const colors = require('colors');
 
-const ABL = artifacts.require('./ABL.sol');
-const ABLG = artifacts.require('./ABLG.sol');
-const ABLGExchanger = artifacts.require('./ABLGExchanger.sol');
-const TokenTimelock = artifacts.require('./TokenTimelock.sol');
+const ETH = 1000000000000000000;
+const ABL = artifacts.require('ABL');
+const ABLG = artifacts.require('ABLG');
+
+
 const PresaleFirst = artifacts.require('PresaleFirst');
 
-const { increaseTimeTo, duration } = require('../test/helpers/increaseTime');
+const { duration } = require('../test/helpers/increaseTime');
 
-module.exports = async (deployer, network, accounts) => {
-    const [_, owner, wallet, buyer, fraud] = accounts;
+async function deployToken(owner, deployer) {
+    let afterBalance = 0;
 
-    let token;
-    let presale;
+    console.log(colors.green("========================================================================"));
+    console.log(colors.green("                              ┌┬┐┌─┐┬┌─┌─┐┌┐┌                           "));
+    console.log(colors.green("                               │ │ │├┴┐├┤ │││                           "));
+    console.log(colors.green("                               ┴ └─┘┴ ┴└─┘┘└┘                           "));
+    console.log(colors.green("========================================================================"));
 
-    let startTime = Date.now() + duration.days(1);
-    let endTime = startTime + duration.weeks(1);
+    // deploy ABL token
+    deployer.deploy(ABL,
+        '0x032d08350f4f44ec654a1cd857bcbd359daf1fa9', // Distribute
+        '0xdcfabaf14442ee98c9cca6f5e40bb97e05e77319', // Developer
+    ).then(() => {
+        // deploy ABLG token
+        deployer.deploy(
+            ABLG
+        ).then(() => {
+            // print checklist
+            console.log(colors.red("============================ !!Check List!! ============================"));
+            console.log(colors.yellow("=> Contract owner           ") + ": " + colors.cyan(owner.toString()));
+            console.log(colors.yellow("=> Address of ABL           ") + ": " + colors.cyan(ABL.address.toString()));
+            console.log(colors.yellow("=> Address of ABLG          ") + ": " + colors.cyan(ABLG.address.toString()));
+            console.log(colors.red("========================================================================"));
+            console.log(colors.grey("////////////////////////////////////////////////////////////////////////"));
+            console.log(colors.grey("////////////////////////////////////////////////////////////////////////"));
 
-    const maxEth = 1500 * ETH;
-    const exdEth = 300 * ETH;
-    const minEth = 0.5 * ETH;
+            deployCrowdsale(owner, deployer);
+        });
+    });
+}
+
+async function deployCrowdsale(owner, deployer) {
+    const startTime = Date.now();
+    const endTime = startTime + duration.years(1);
+
+    const maxEth = 100;
+    const exdEth = 30;
+    const minEth = 0.5;
 
     const rate = 11500;
 
-    // deploy ABL token
-    await deployer.deploy(ABL, owner, owner);
-    await deployer.deploy(PresaleFirst, startTime, endTime, maxEth, exdEth, minEth, wallet, ABL.address, rate);
-}
-/*
-uint256 _startTime,
-uint256 _endTime,
-uint256 _maxcap,
-uint256 _exceed,
-uint256 _minimum,
-address _wallet,
-address _token,
-uint256 _rate
+    console.log(colors.green("========================================================================"));
+    console.log(colors.green("                      ┌─┐┬─┐┌─┐┬ ┬┌┬┐┌─┐┌─┐┬  ┌─┐                       "));
+    console.log(colors.green("                      │  ├┬┘│ ││││ ││└─┐├─┤│  ├┤                        "));
+    console.log(colors.green("                      └─┘┴└─└─┘└┴┘─┴┘└─┘┴ ┴┴─┘└─┘                       "));
+    console.log(colors.green("========================================================================"));
 
-*/
+    // deploy ABLG exchanger
+    deployer.deploy(PresaleFirst,
+        startTime, endTime, // Time limit
+        maxEth*ETH, exdEth*ETH, minEth*ETH, // Fund limit
+        owner, // Fund wallet
+        ABL.address, // Token address
+        rate,    // Exchange rate [ETH : ABL]
+    ).then(() => {
+        // print checklist
+        console.log(colors.red("============================ !!Check List!! ============================"));
+        console.log(colors.yellow("=> Contract owner           ") + ": " + colors.cyan(owner.toString()));
+        console.log(colors.yellow("=> Address of PresaleFirst  ") + ": " + colors.cyan(PresaleFirst.address.toString()));
+        console.log(colors.red("========================================================================"));
+    });
+}
+
+module.exports = async (deployer, network, accounts) => {
+    if(network == "ropsten" || network == "rinkeby") {
+        deployToken(accounts[0], deployer);
+    }
+}

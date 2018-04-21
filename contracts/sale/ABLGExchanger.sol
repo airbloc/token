@@ -1,8 +1,8 @@
 pragma solidity ^0.4.19;
 
-import "../zeppelin/token/ERC20/ERC20.sol";
-import "../zeppelin/math/SafeMath.sol";
-import "../zeppelin/ownership/Ownable.sol";
+import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../util/OwnedTokenTimelock.sol";
 
 
@@ -57,9 +57,6 @@ contract ABLGExchanger is Ownable {
             uint256 lamount;
 
             (samount, lamount) = calcAmount(key);
-
-            emit LogUint(samount);
-            emit LogUint(lamount);
 
             // Send owner's ABL Tokens to msg.sender
             ABL.safeTransfer(key, samount);
@@ -144,9 +141,6 @@ contract ABLGExchanger is Ownable {
 //  events
 //////////////////
 
-    event LogAddress(address msg);
-    event LogString(string msg);
-    event LogUint(uint256 msg);
     event AddHolder(address holder, uint256 amount);
     event RemoveHolder(address holder, uint256 index);
 }

@@ -1,13 +1,12 @@
 pragma solidity ^0.4.19;
 
-import "../zeppelin/token/ERC20/StandardToken.sol";
-import "../zeppelin/ownership/Ownable.sol";
-import "../zeppelin/math/SafeMath.sol";
+import "zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 contract ABLG is StandardToken, Ownable {
-
-    mapping (address => uint256) public holders;
+    using SafeMath for uint256;
 
     // Token Information
     string public name = "Airbloc Genesis Token";
@@ -15,9 +14,9 @@ contract ABLG is StandardToken, Ownable {
     uint256 public decimals = 18;
     uint256 public totalSupply = 0;
 
-    // Mint
-    event Mint(address indexed to, uint256 amount);
-
+//////////////////////
+//  mint and burn   //
+//////////////////////
     function mint(
         address _to,
         uint256 _amount
@@ -25,24 +24,30 @@ contract ABLG is StandardToken, Ownable {
         require(_to != address(0));
         require(_amount >= 0);
 
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
+        uint256 amount = _amount.mul(10 ** uint256(decimals));
+
+        totalSupply = totalSupply.add(amount);
+        balances[_to] = balances[_to].add(amount);
+
+        emit Mint(_to, amount);
+        emit Transfer(address(0), _to, amount);
+
         return true;
     }
 
-    // Burn
-    event Burn(address indexed from, uint256 amount);
-
-    function burn(uint256 _amount) public {
-        address from = msg.sender;
+    function burn(
+        uint256 _amount
+        ) onlyOwner public {
         require(_amount >= 0);
-        require(_amount <= balances[from]);
+        require(_amount <= balances[msg.sender]);
 
-        totalSupply = totalSupply.sub(_amount);
-        balances[from] = balances[from].sub(_amount);
-        emit Burn(from, _amount);
-        emit Transfer(from, address(0), _amount);
+        totalSupply = totalSupply.sub(_amount.mul(10 ** uint256(decimals)));
+        balances[msg.sender] = balances[msg.sender].sub(_amount.mul(10 ** uint256(decimals)));
+
+        emit Burn(msg.sender, _amount.mul(10 ** uint256(decimals)));
+        emit Transfer(msg.sender, address(0), _amount.mul(10 ** uint256(decimals)));
     }
+
+    event Mint(address to, uint256 amount);
+    event Burn(address from, uint256 amount);
 }

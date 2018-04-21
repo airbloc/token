@@ -1,9 +1,9 @@
 pragma solidity ^0.4.19;
 
-import "../zeppelin/token/ERC20/TokenTimelock.sol";
-import "../zeppelin/token/ERC20/SafeERC20.sol";
-import "../zeppelin/token/ERC20/ERC20Basic.sol";
-import "../zeppelin/ownership/Ownable.sol";
+import "zeppelin-solidity/contracts/token/ERC20/TokenTimelock.sol";
+import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
 contract OwnedTokenTimelock is Ownable, TokenTimelock {

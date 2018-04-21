@@ -12,17 +12,19 @@ require('chai')
 const MintableToken = artifacts.require('MintableToken');
 const PresaleFirst = artifacts.require('PresaleFirst');
 
-contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, buyer3, buyer4, buyer5, fraud]) {
+contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, buyer3, buyer4, buyer5, buyer6, fraud]) {
     let token;
     let presale;
     let startTime;
     let endTime;
+
     const buyers = [
         buyer1,
-        buyer2,
-        buyer3,
-        buyer4,
-        buyer5
+        // buyer2,
+        // buyer3,
+        // buyer4,
+        // buyer5,
+        // buyer6
     ];
 
     const maxEth = 1500;
@@ -47,10 +49,10 @@ contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, bu
 
             wallet,
             token.address,
-            rate / 100,
+            rate,
             { from: owner }
         );
-        await token.mint(presale.address, maxEth * rate, { from: owner });
+        await token.mint(presale.address, ether(maxEth * rate), { from: owner });
 
         await presale.addAddressToWhitelist(buyer, { from: owner }).should.be.fulfilled;
         const isPaused = await presale.paused();
@@ -104,7 +106,7 @@ contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, bu
         });
 
         describe('processing payments', () => {
-            it('should get refund when paid over exceed', async () => {
+            it('should get refund when paid over exceed (single)', async () => {
                 const beforeBalance = await web3.eth.getBalance(buyer);
 
                 await presale.sendTransaction({ from: buyer, value: ether(350) }).should.be.fulfilled;
@@ -115,7 +117,7 @@ contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, bu
                 diff.should.be.above(ether(300).toNumber());
             });
 
-            it('should get refund when paid over exceed', async () => {
+            it('should get refund when paid over exceed (multi)', async () => {
                 const beforeBalance = await web3.eth.getBalance(buyer);
 
                 await presale.sendTransaction({ from: buyer, value: ether(200) }).should.be.fulfilled;
@@ -136,7 +138,7 @@ contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, bu
                 await presale.release({ from: owner }).should.be.fulfilled;
 
                 const balance = await token.balanceOf(buyer);
-                balance.should.be.bignumber.equal(10 * rate);
+                balance.should.be.bignumber.equal(ether(10 * rate));
             });
 
             it('should distribute correct amount of token to many', async () => {
@@ -151,11 +153,36 @@ contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, bu
 
                 for (let b of buyers) {
                     const balance = await token.balanceOf(b);
-                    balance.should.be.bignumber.equal(10 * rate);
+                    balance.should.be.bignumber.equal(ether(10 * rate));
                 }
             });
 
-            it('cannot release twice', async () => {
+            it('should not distribute when maxcap is fulfilled', async () => {
+                await presale.addAddressesToWhitelist(buyers, { from: owner }).should.be.fulfilled;
+
+                for (let b of buyers) {
+                    if(b == buyer6) {
+                        await presale.sendTransaction({ from: b, value: ether(exdEth) }).should.be.rejected;
+                    } else {
+                        await presale.sendTransaction({ from: b, value: ether(exdEth) }).should.be.fulfilled;
+                    }
+                }
+
+                await increaseTimeTo(endTime + duration.days(3));
+                await presale.release({ from: owner }).should.be.fulfilled;
+
+                for (let b of buyers) {
+                    const balance = await token.balanceOf(b);
+
+                    if(b == buyer6) {
+                        balance.should.be.bignumber.equal(0);
+                    } else {
+                        balance.should.be.bignumber.equal(ether(exdEth * rate));
+                    }
+                }
+            });
+
+            it('should not release twice', async () => {
                 await presale.sendTransaction({ from: buyer, value: ether(10) }).should.be.fulfilled;
 
                 await increaseTimeTo(endTime + duration.days(3));

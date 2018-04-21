@@ -1,3 +1,5 @@
+import ether from './helpers/ether';
+
 const ABL = artifacts.require('ABL');
 const BigNumber = web3.BigNumber;
 
@@ -15,8 +17,8 @@ contract('Airbloc Token', function ([_, dtb, dev, test]) {
     const _decimals = 18;
 
     before(async () => {
-        abli = await ABL.new(dtb, dev);
-        await abli.addOwner(dtb);
+        abli = await ABL.new(dtb, dev, { from: dtb });
+        await abli.addOwner(test, { from: dtb });
     })
 
     // Token Options
@@ -37,33 +39,40 @@ contract('Airbloc Token', function ([_, dtb, dev, test]) {
 
     // Mint
     it("should mint correctly", async () => {
-        const beforeBalance = await abli.balanceOf(dtb);
+        const beforeBalance = await abli.balanceOf(test);
         const beforeTotalSupply = await abli.totalSupply();
 
-        await abli.mint(dtb, amount);
+        await abli.mint(test, amount, { from: test });
 
-        const afterBalance = await abli.balanceOf(dtb);
+        const afterBalance = await abli.balanceOf(test);
         const afterTotalSupply = await abli.totalSupply();
 
         const balanceGap = afterBalance - beforeBalance;
-        balanceGap.should.be.equal(amount, 'there are some problems in minting process');
+        balanceGap.should.be.bignumber.equal(ether(amount), 'there are some problems in minting process');
         const supplyGap = afterTotalSupply - beforeTotalSupply;
-        supplyGap.should.be.equal(amount, 'there are some problems in minting process');
+        supplyGap.should.be.bignumber.equal(ether(amount), 'there are some problems in minting process');
+    });
+
+    it('should reject payment to token contract', async () => {
+        const beforeBalance = await abli.balanceOf(test);
+        await abli.transfer(abli.address, beforeBalance).should.be.rejected;
+        const afterBalance = await abli.balanceOf(test);
+        afterBalance.should.be.bignumber.equal(beforeBalance);
     });
 
     // Burn
     it("should burn correctly", async () => {
-        const beforeBalance = await abli.balanceOf(dtb);
+        const beforeBalance = await abli.balanceOf(test);
         const beforeTotalSupply = await abli.totalSupply();
 
-        await abli.burn(amount, {from: dtb});
+        await abli.burn(amount, { from: test });
 
-        const afterBalance = await abli.balanceOf(dtb);
+        const afterBalance = await abli.balanceOf(test);
         const afterTotalSupply = await abli.totalSupply();
 
         const balanceGap = beforeBalance - afterBalance;
-        balanceGap.should.be.equal(amount, 'there are some problems in burning process');
+        balanceGap.should.be.bignumber.equal(ether(amount), 'there are some problems in burning process');
         const supplyGap = beforeTotalSupply - afterTotalSupply;
-        supplyGap.should.be.equal(amount, 'there are some problems in burning process');
+        supplyGap.should.be.bignumber.equal(ether(amount), 'there are some problems in burning process');
     });
 })
