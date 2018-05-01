@@ -14,10 +14,14 @@ contract ABL is StandardToken, OwnableToken {
     uint256 public constant DEVELOPERS = 178550000;   // developer
 
     // Token Information
-    string public name = "Airbloc Token";
-    string public symbol = "ABL";
-    uint256 public decimals = 18;
-    uint256 public totalSupply = SUM;
+    string public constant name = "Airbloc";
+    string public constant symbol = "ABL";
+    uint256 public constant decimals = 18;
+    uint256 public totalSupply = SUM.mul(10 ** uint256(decimals));
+
+    // token is non-transferable until owner calls unlock()
+    // (to prevent OTC before the token to be listed on exchanges)
+    bool isTransferable = false;
 
     function ABL(
         address _dtb,
@@ -34,29 +38,17 @@ contract ABL is StandardToken, OwnableToken {
         emit Transfer(address(0), _dev, balances[_dev]);
     }
 
-/////////////////////////
-//  override transfer  //
-/////////////////////////
-    bool isLocked = true;
-
-    modifier locked() {
-        require(!isLocked);
-        _;
+    function unlock() external onlyOwner {
+        isTransferable = true;
     }
 
-    function unlock() public onlyOwner {
-        isLocked = false;
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(isTransferable || owners[msg.sender]);
+        return super.transferFrom(_from, _to, _value);
     }
 
-/////////////////////////////////////////////
-//       should remove this only test      //
-    function lock() public onlyOwner {
-        isLocked = true;
-    }
-/////////////////////////////////////////////
-
-    function transfer(address _to, uint256 _value) public locked returns (bool) {
-        require(_to != address(this));
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(isTransferable || owners[msg.sender]);
         return super.transfer(_to, _value);
     }
 

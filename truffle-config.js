@@ -1,10 +1,8 @@
 require('babel-register');
 require('babel-polyfill');
 
-const HDWalletProvider = require("truffle-hdwallet-provider");
-
-const infura_apikey = "XXXXXXXXXXXXXXXXXXXX";
-const mnemonic = "airbloc frostornge airbloc frostornge airbloc frostornge airbloc frostornge airbloc frostornge airbloc frostornge";
+const newProvider = require('./config.local.test.js');
+const main = require('./config.local.deploy.js');
 
 module.exports = {
     networks: {
@@ -12,22 +10,33 @@ module.exports = {
             host: "127.0.0.1",
             port: 8545,
             network_id: "*",
-            gas: 4300000
+            gas: 250000,
         },
         main: {
             network_id: 1,
-            provider: new HDWalletProvider(mnemonic, "https://ropsten.infura.io/"+infura_apikey),
-            gas: 3700000
+            provider: main()
         },
         ropsten: {
             network_id: 3,
-            provider: new HDWalletProvider(mnemonic, "https://ropsten.infura.io/"+infura_apikey),
-            gas: 3700000
+            provider: newProvider('ropsten'),
+            gas: 3000000,
         },
         rinkeby: {
             network_id: 4,
-            provider: new HDWalletProvider(mnemonic, "https://rinkeby.infura.io/"+infura_apikey),
-            gas: 3000000
+            provider: newProvider('rinkeby'),
+            gas: 500000,
+        }
+    },
+    mocha: {
+        reporter: 'eth-gas-reporter',
+        reporterOptions: {
+            currency: 'KRW'
+        }
+    },
+    solcjs: {
+        optimizer: {
+            "enabled": true,
+            "runs": 200
         }
     }
 };

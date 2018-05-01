@@ -42,14 +42,8 @@ contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, bu
             // time
             startTime,
             endTime,
-            // sale
-            ether(maxEth),
-            ether(exdEth),
-            ether(minEth),
-
             wallet,
             token.address,
-            rate,
             { from: owner }
         );
         await token.mint(presale.address, ether(maxEth * rate), { from: owner });
@@ -127,6 +121,14 @@ contract('First Presale', function ([_, owner, wallet, buyer, buyer1, buyer2, bu
 
                 const diff = beforeBalance.toNumber() - afterBalance.toNumber();
                 diff.should.be.above(ether(300).toNumber());
+            });
+
+            it('testest', async() => {
+                console.log(await web3.eth.getBalance(wallet));
+                await presale.sendTransaction({ from: buyer, value: ether(200) }).should.be.fulfilled;
+                await increaseTimeTo(endTime + duration.days(3));
+                await presale.release({ from: owner }).should.be.fulfilled;
+                console.log(await web3.eth.getBalance(wallet));
             });
         });
 
