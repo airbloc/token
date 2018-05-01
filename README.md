@@ -7,4 +7,4 @@ This is contract of airbloc token.
 
 ## License
 
-[MIT](LICENSE) © Airbloc
+[MIT](LICENSE) © Airbloc Foundation

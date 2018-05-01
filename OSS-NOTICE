@@ -1,6 +1,24 @@
+OSS Notice | Airbloc
+
+This smart contracts are Copyright Airbloc Foundation. All rights reserved.
+
+This smart contracts use Open Source Software (OSS). You can find the source code of these open source projects, along with applicable license information, below. We are deeply grateful to these developers for their work and contributions.
+
+- Zeppelin Solidity
+  https://github.com/OpenZeppelin/zeppelin-solidity
+  Copyright (c) 2016 Smart Contract Solutions, Inc.
+  MIT License
+
+- Truffle
+  https://github.com/trufflesuite/truffle
+  Copyright (c) Consensys LLC, and authors.
+  MIT License
+
+=====================================================
+
 MIT License
 
-Copyright (c) 2018 Airbloc Foundation
+Copyright (c) <year> <copyright holders>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

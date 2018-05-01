@@ -11,6 +11,7 @@
         "ganache-run": "docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 50 -e 1000000",
         "ganache-stop": "docker rm -f ganache",
 
+        "export": "npm run ganache-run; truffle export abi; npm run ganache-stop",
 
         "test": "npm run ganache-run; truffle test --show-events; npm run ganache-stop",
         "test:ropsten": "truffle test --network ropsten",
@@ -47,7 +48,9 @@
         "chai": "^4.1.2",
         "chai-as-promised": "^7.1.1",
         "chai-bignumber": "^2.0.2",
+        "eth-gas-reporter": "^0.1.2",
         "solium": "^1.1.6",
-        "truffle-hdwallet-provider": "0.0.3"
+        "truffle-hdwallet-provider": "0.0.3",
+        "truffle-ledger-provider": "0.0.1"
     }
 }

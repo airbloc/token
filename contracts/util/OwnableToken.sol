@@ -8,10 +8,7 @@ contract OwnableToken {
     event OwnershipExtended(address indexed host, address indexed guest);
 
     modifier onlyOwner() {
-        if(!owners[msg.sender]) {
-            delete owners[msg.sender];
-            revert();
-        }
+        require(owners[msg.sender]);
         _;
     }
 
@@ -27,8 +24,8 @@ contract OwnableToken {
 
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
-        delete owners[msg.sender];
         owners[newOwner] = true;
+        delete owners[msg.sender];
         emit OwnershipTransferred(msg.sender, newOwner);
     }
 }
