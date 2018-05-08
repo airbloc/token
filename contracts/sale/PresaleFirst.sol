@@ -5,7 +5,6 @@ import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "zeppelin-solidity/contracts/ownership/Whitelist.sol";
 import "zeppelin-solidity/contracts/lifecycle/Pausable.sol";
-import "../token/ABL.sol";
 
 
 contract PresaleFirst is Whitelist, Pausable {
