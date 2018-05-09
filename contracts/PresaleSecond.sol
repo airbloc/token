@@ -1,20 +1,24 @@
 pragma solidity 0.4.23;
 
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
-import "zeppelin-solidity/contracts/lifecycle/Pausable.sol";
-import "zeppelin-solidity/contracts/ownership/Whitelist.sol";
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/ownership/Whitelist.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
-contract PresaleFirst is Ownable, Pausable {
+contract PresaleFirst is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
 ////////////////////////////////////
 //  events
 ////////////////////////////////////
+    event Pause();
+    event Unpause();
+    event Ignite();
+    event Extinguish();
+
     event Release(address indexed _to, uint256 _amount);
     event Refund(address indexed _to, uint256 _amount);
 
@@ -23,23 +27,25 @@ contract PresaleFirst is Ownable, Pausable {
 
     event Purchase(address indexed _buyer, uint256 _price, uint256 _tokens);
 
-    // Do not touch
+////////////////////////////////////
+//  constructor
+////////////////////////////////////
     uint256 public maxcap;  // sale hardcap
     uint256 public exceed;  // indivisual hardcap
     uint256 public minimum; // indivisual softcap
     uint256 public rate;    // exchange rate
 
-    // Umm... maybe?
-    uint256 public startTime;   // sale startTime
-    uint256 public endTime;     // sale endTime
-    uint256 public weiRaised;   // check sale status
+    uint256 public startTime;     // sale startTime
+    uint256 public endTime;       // sale endTime
+    uint256 public weiRaised;     // check sale status
+    bool public paused = false;   // is sale paused?
+    bool public ignited = false;  // is sale started?
 
-    // free
     address public wallet;      // wallet for withdrawal
     address public distributor; // contract for release, refund
 
-    Whitelist public whitelist; // whitelist
-    ERC20 public token;         // token
+    Whitelist public List; // whitelist
+    ERC20 public Token;         // token
 
     constructor (
         //////////////////////////
@@ -57,9 +63,7 @@ contract PresaleFirst is Ownable, Pausable {
         address _whitelist,
         address _token
         //////////////////////////
-    )
-        public
-    {
+    ) public {
         require(_wallet != address(0), "given address is empty (_wallet)");
         require(_token != address(0), "given address is empty (_token)");
         require(_whitelist != address(0), "given address is empty (_whitelist)");
@@ -67,7 +71,7 @@ contract PresaleFirst is Ownable, Pausable {
 
         maxcap = _maxcap;
         exceed = _exceed;
-        minimum = _minumum;
+        minimum = _minimum;
         rate = _rate;
 
         startTime = _startTime;
@@ -77,8 +81,8 @@ contract PresaleFirst is Ownable, Pausable {
         wallet = _wallet;
         distributor = _distributor;
 
-        whitelist = Whitelist(_whitelist);
-        token = ERC20(_token);
+        List = Whitelist(_whitelist);
+        Token = ERC20(_token);
     }
 
     /* fallback function */
@@ -103,7 +107,7 @@ contract PresaleFirst is Ownable, Pausable {
 
     function setWhitelist(address _whitelist) external onlyOwner {
         require(_whitelist != address(0), "given address is empty (_whitelist)");
-        whitelist = Whitelist(_whitelist);
+        List = Whitelist(_whitelist);
     }
 
     function setDistributor(address _distributor) external onlyOwner {
@@ -113,13 +117,40 @@ contract PresaleFirst is Ownable, Pausable {
 
     function setWallet(address _wallet) external onlyOwner {
         require(_wallet != address(0), "given address is empty (_wallet)");
-        wallet = Whitelist(_wallet);
+        wallet = _wallet;
+    }
+
+////////////////////////////////////
+//  sale controller
+////////////////////////////////////
+    function pause() external onlyOwner {
+        paused = true;
+        emit Pause();
+    }
+
+    function unpause() external onlyOwner {
+        paused = false;
+        emit Unpause();
+    }
+
+    function ignite() external onlyOwner {
+        ignited = true;
+        emit Ignite();
+    }
+
+    function extinguish() external onlyOwner {
+        require(now >= endTime, "cannot end sale before endTime");
+        delegateExtinguish();
+    }
+
+    function delegateExtinguish() private {
+        ignited = false;
+        emit Extinguish();
     }
 
 ////////////////////////////////////
 //  collect eth
 ////////////////////////////////////
-
     mapping (address => uint256) public buyers;
     address[] public keys;
 
@@ -131,13 +162,9 @@ contract PresaleFirst is Ownable, Pausable {
      * @dev collect ether from buyer
      * @param _buyer The address that tries to purchase
      */
-    function collect()
-        public
-        payable
-        whenIgnited
-        whenNotPaused
-    {
-        require(Whitelist.whitelist[msg.sender], "current buyer is not in whitelist [buyer]");
+    function collect() public payable {
+        require(paused && ignited, "not yet");
+        require(List.whitelist(msg.sender), "current buyer is not in whitelist [buyer]");
 
         // prevent purchase delegation
         address buyer = msg.sender;
@@ -146,11 +173,16 @@ contract PresaleFirst is Ownable, Pausable {
 
         if(buyers[buyer] == 0) keys.push(buyer);
 
-        uint256 (purchase, refund) = getPurchaseAmount(buyer);
+        uint256 purchase;
+        uint256 refund;
+
+        (purchase, refund)= getPurchaseAmount(buyer);
 
         // buy
         uint256 tokenAmount = purchase.mul(rate);
         weiRaised = weiRaised.add(purchase);
+
+        if(weiRaised >= maxcap) delegateExtinguish();
 
         // wallet
         buyers[buyer] = buyers[buyer].add(purchase);
@@ -163,7 +195,6 @@ contract PresaleFirst is Ownable, Pausable {
 ////////////////////////////////////
 //  util functions for collect
 ////////////////////////////////////
-
     /**
      * @dev validate current status
      * @param _buyer The address that tries to purchase
@@ -172,7 +203,7 @@ contract PresaleFirst is Ownable, Pausable {
         require(_buyer != address(0), "given address is empty (_buyer)");
         require(buyers[_buyer].add(msg.value) > minimum, "cannot buy under minimum");
         require(buyers[_buyer] < exceed, "cannot buy over exceed");
-        require(weiRaised <= maxcap, "hardcap is already filled");
+        require(weiRaised < maxcap, "hardcap is already filled");
     }
 
     /**
@@ -246,7 +277,6 @@ contract PresaleFirst is Ownable, Pausable {
 ////////////////////////////////////
 //  finalize
 ////////////////////////////////////
-
     /**
      * @dev if sale finalized?
      */
@@ -255,13 +285,9 @@ contract PresaleFirst is Ownable, Pausable {
     /**
      * @dev finalize sale and withdraw everything (token, ether)
      */
-    function finalize()
-        public
-        whenPaused
-        onlyOwner
-    {
+    function finalize() external onlyOwner {
+        require(!ignited, "sale is not over");
         require(!finalized, "already finalized [finalized()]");
-        require(weiRaised >= maxcap || now >= endTime, "sale not ended");
 
         // send ether and token to dev wallet
         withdrawEther();
@@ -273,23 +299,19 @@ contract PresaleFirst is Ownable, Pausable {
 ////////////////////////////////////
 //  release & release
 ////////////////////////////////////
-
     /**
      * @dev release token to buyer
      * @param _addr The address that owner want to release token
      */
-    function release(address _addr)
-        external
-        whenPaused
-        returns (bool)
-    {
+    function release(address _addr) external returns (bool) {
+        require(!ignited, "sale is not over");
+        require(!finalized, "already finalized [release()]");
         require(msg.sender == distributor, "invalid sender [release()]");
         require(_addr != address(0), "given address is empty (_addr)");
-        require(!finalized, "already finalized [release()]");
 
         if(buyers[_addr] == 0) return false;
 
-        token.safeTransfer(_addr, buyers[_addr].mul(rate));
+        Token.safeTransfer(_addr, buyers[_addr].mul(rate));
         emit Release(_addr, buyers[_addr].mul(rate));
 
         delete buyers[_addr];
@@ -300,14 +322,11 @@ contract PresaleFirst is Ownable, Pausable {
      * @dev refund ether to buyer
      * @param _addr The address that owner want to refund ether
      */
-    function refund(address _addr)
-        external
-        whenPaused
-        returns (bool)
-    {
+    function refund(address _addr) external returns (bool) {
+        require(!ignited, "sale is not over");
+        require(!finalized, "already finalized [refund()]");
         require(msg.sender == distributor, "invalid sender [refund()]");
         require(_addr != address(0), "given address is empty (_addr)");
-        require(!finalized, "already finalized [refund()]");
 
         if(buyers[_addr] == 0) return false;
 
@@ -321,27 +340,18 @@ contract PresaleFirst is Ownable, Pausable {
 ////////////////////////////////////
 //  withdraw
 ////////////////////////////////////
-
     /**
      * @dev withdraw token to specific wallet
      */
-    function withdrawToken()
-        public
-        whenPaused
-        onlyOwner
-    {
-        token.safeTransfer(wallet, token.balanceOf(address(this)));
-        emit WithdrawToken(wallet, token.balanceOf(address(this)));
+    function withdrawToken() public onlyOwner {
+        Token.safeTransfer(wallet, Token.balanceOf(address(this)));
+        emit WithdrawToken(wallet, Token.balanceOf(address(this)));
     }
 
     /**
      * @dev withdraw ether to specific wallet
      */
-    function withdrawEther()
-        public
-        whenPaused
-        onlyOwner
-    {
+    function withdrawEther() public onlyOwner {
         wallet.transfer(address(this).balance);
         emit WithdrawEther(wallet, address(this).balance);
     }

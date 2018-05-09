@@ -1,10 +1,10 @@
 pragma solidity ^0.4.19;
 
-import "zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "zeppelin-solidity/contracts/math/SafeMath.sol";
-import "zeppelin-solidity/contracts/ownership/Whitelist.sol";
-import "zeppelin-solidity/contracts/lifecycle/Pausable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/ownership/Whitelist.sol";
+import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
 
 contract PresaleFirst is Whitelist, Pausable {
