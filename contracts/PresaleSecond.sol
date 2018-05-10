@@ -7,18 +7,105 @@ import "openzeppelin-solidity/contracts/ownership/Whitelist.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
-contract PresaleFirst is Ownable {
+contract Crowdsale {
+    uint256 public maxcap;      // sale hardcap
+    uint256 public exceed;      // indivisual hardcap
+    uint256 public minimum;     // indivisual softcap
+    uint256 public rate;        // exchange rate
+    uint256 public weiRaised;   // check sale status
+    ERC20 public Token;         // token
+
+    constructor (
+        uint256 _maxcap,
+        uint256 _exceed,
+        uint256 _minimum,
+        uint256 _rate,
+        address _token
+    ) public {
+        require(_token != address(0), "given address is empty (_token)");
+
+        maxcap = _maxcap;
+        exceed = _exceed;
+        minimum = _minimum;
+        rate = _rate;
+        weiRaised = 0;
+        Token = ERC20(_token);
+    }
+}
+
+
+contract Timed is Ownable {
+    uint256 public startTime;     // sale startTime
+    uint256 public endTime;       // sale endTime
+
+    constructor (
+        uint256 _startTime,
+        uint256 _endTime
+    ) public {
+        require(_startTime > 0, "cannot set startTime under zero");
+        require(_endTime > 0, "cannot set endTime under zero");
+        require(_startTime < _endTime, "cannot set startTime after endTime");
+
+        startTime = _startTime;
+        endTime = _endTime;
+    }
+
+    function setEndTime(uint256 _time) external onlyOwner {
+        require(_time > now, "cannot set endTime to past");
+        require(_time > startTime, "cannot set endTime before startTime");
+        endTime = _time;
+    }
+
+    function setStartTime(uint256 _time) external onlyOwner {
+        require(_time > now, "cannot set startTime to past");
+        require(_time < endTime, "cannot set startTime after endTime");
+        startTime = _time;
+    }
+}
+
+
+contract Controlled is Ownable {
+    event Pause();
+    event Unpause();
+    event Ignite();
+    event Extinguish();
+
+    bool public paused = false;   // is sale paused?
+    bool public ignited = false;  // is sale started?
+
+    function pause() external onlyOwner {
+        paused = true;
+        emit Pause();
+    }
+
+    function unpause() external onlyOwner {
+        paused = false;
+        emit Unpause();
+    }
+
+    function ignite() external onlyOwner {
+        ignited = true;
+        emit Ignite();
+    }
+
+    function extinguish() external onlyOwner {
+        delegateExtinguish();
+    }
+
+    function delegateExtinguish() internal {
+        ignited = false;
+        emit Extinguish();
+    }
+}
+
+
+contract PresaleSecond is Timed, Controlled, Crowdsale {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
 ////////////////////////////////////
 //  events
 ////////////////////////////////////
-    event Pause();
-    event Unpause();
-    event Ignite();
-    event Extinguish();
-
     event Release(address indexed _to, uint256 _amount);
     event Refund(address indexed _to, uint256 _amount);
 
@@ -30,22 +117,9 @@ contract PresaleFirst is Ownable {
 ////////////////////////////////////
 //  constructor
 ////////////////////////////////////
-    uint256 public maxcap;  // sale hardcap
-    uint256 public exceed;  // indivisual hardcap
-    uint256 public minimum; // indivisual softcap
-    uint256 public rate;    // exchange rate
-
-    uint256 public startTime;     // sale startTime
-    uint256 public endTime;       // sale endTime
-    uint256 public weiRaised;     // check sale status
-    bool public paused = false;   // is sale paused?
-    bool public ignited = false;  // is sale started?
-
     address public wallet;      // wallet for withdrawal
     address public distributor; // contract for release, refund
-
     Whitelist public List; // whitelist
-    ERC20 public Token;         // token
 
     constructor (
         //////////////////////////
@@ -63,26 +137,28 @@ contract PresaleFirst is Ownable {
         address _whitelist,
         address _token
         //////////////////////////
-    ) public {
+    )
+        public
+        Crowdsale(
+            _maxcap,
+            _exceed,
+            _minimum,
+            _rate,
+            _token
+        )
+        Timed(
+            _startTime,
+            _endTime
+        )
+    {
         require(_wallet != address(0), "given address is empty (_wallet)");
-        require(_token != address(0), "given address is empty (_token)");
         require(_whitelist != address(0), "given address is empty (_whitelist)");
         require(_distributor != address(0), "given address is empty (_distributor)");
-
-        maxcap = _maxcap;
-        exceed = _exceed;
-        minimum = _minimum;
-        rate = _rate;
-
-        startTime = _startTime;
-        endTime = _endTime;
-        weiRaised = 0;
 
         wallet = _wallet;
         distributor = _distributor;
 
         List = Whitelist(_whitelist);
-        Token = ERC20(_token);
     }
 
     /* fallback function */
@@ -93,18 +169,6 @@ contract PresaleFirst is Ownable {
 ////////////////////////////////////
 //  setter
 ////////////////////////////////////
-    function setEndTime(uint256 _time) external onlyOwner {
-        require(_time > now, "cannot set endTime to past");
-        require(_time > startTime, "cannot set endTime before startTime");
-        endTime = _time;
-    }
-
-    function setStartTime(uint256 _time) external onlyOwner {
-        require(_time > now, "cannot set startTime to past");
-        require(_time < endTime, "cannot set startTime after endTime");
-        startTime = _time;
-    }
-
     function setWhitelist(address _whitelist) external onlyOwner {
         require(_whitelist != address(0), "given address is empty (_whitelist)");
         List = Whitelist(_whitelist);
@@ -121,34 +185,6 @@ contract PresaleFirst is Ownable {
     }
 
 ////////////////////////////////////
-//  sale controller
-////////////////////////////////////
-    function pause() external onlyOwner {
-        paused = true;
-        emit Pause();
-    }
-
-    function unpause() external onlyOwner {
-        paused = false;
-        emit Unpause();
-    }
-
-    function ignite() external onlyOwner {
-        ignited = true;
-        emit Ignite();
-    }
-
-    function extinguish() external onlyOwner {
-        require(now >= endTime, "cannot end sale before endTime");
-        delegateExtinguish();
-    }
-
-    function delegateExtinguish() private {
-        ignited = false;
-        emit Extinguish();
-    }
-
-////////////////////////////////////
 //  collect eth
 ////////////////////////////////////
     mapping (address => uint256) public buyers;
@@ -160,7 +196,6 @@ contract PresaleFirst is Ownable {
 
     /**
      * @dev collect ether from buyer
-     * @param _buyer The address that tries to purchase
      */
     function collect() public payable {
         require(paused && ignited, "not yet");
