@@ -7,119 +7,28 @@ import "openzeppelin-solidity/contracts/ownership/Whitelist.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
-contract Crowdsale {
-    uint256 public maxcap;      // sale hardcap
-    uint256 public exceed;      // indivisual hardcap
-    uint256 public minimum;     // indivisual softcap
-    uint256 public rate;        // exchange rate
-    uint256 public weiRaised;   // check sale status
-    ERC20 public Token;         // token
-
-    constructor (
-        uint256 _maxcap,
-        uint256 _exceed,
-        uint256 _minimum,
-        uint256 _rate,
-        address _token
-    ) public {
-        require(_token != address(0), "given address is empty (_token)");
-
-        maxcap = _maxcap;
-        exceed = _exceed;
-        minimum = _minimum;
-        rate = _rate;
-        weiRaised = 0;
-        Token = ERC20(_token);
-    }
-}
-
-
-contract Timed is Ownable {
-    uint256 public startTime;     // sale startTime
-    uint256 public endTime;       // sale endTime
-
-    constructor (
-        uint256 _startTime,
-        uint256 _endTime
-    ) public {
-        require(_startTime > 0, "cannot set startTime under zero");
-        require(_endTime > 0, "cannot set endTime under zero");
-        require(_startTime < _endTime, "cannot set startTime after endTime");
-
-        startTime = _startTime;
-        endTime = _endTime;
-    }
-
-    function setEndTime(uint256 _time) external onlyOwner {
-        require(_time > now, "cannot set endTime to past");
-        require(_time > startTime, "cannot set endTime before startTime");
-        endTime = _time;
-    }
-
-    function setStartTime(uint256 _time) external onlyOwner {
-        require(_time > now, "cannot set startTime to past");
-        require(_time < endTime, "cannot set startTime after endTime");
-        startTime = _time;
-    }
-}
-
-
-contract Controlled is Ownable {
-    event Pause();
-    event Unpause();
-    event Ignite();
-    event Extinguish();
-
-    bool public paused = false;   // is sale paused?
-    bool public ignited = false;  // is sale started?
-
-    function pause() external onlyOwner {
-        paused = true;
-        emit Pause();
-    }
-
-    function unpause() external onlyOwner {
-        paused = false;
-        emit Unpause();
-    }
-
-    function ignite() external onlyOwner {
-        ignited = true;
-        emit Ignite();
-    }
-
-    function extinguish() external onlyOwner {
-        delegateExtinguish();
-    }
-
-    function delegateExtinguish() internal {
-        ignited = false;
-        emit Extinguish();
-    }
-}
-
-
-contract PresaleSecond is Timed, Controlled, Crowdsale {
+contract PresaleSecond {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
 ////////////////////////////////////
-//  events
-////////////////////////////////////
-    event Release(address indexed _to, uint256 _amount);
-    event Refund(address indexed _to, uint256 _amount);
-
-    event WithdrawToken(address indexed _from, uint256 _amount);
-    event WithdrawEther(address indexed _from, uint256 _amount);
-
-    event Purchase(address indexed _buyer, uint256 _price, uint256 _tokens);
-
-////////////////////////////////////
 //  constructor
 ////////////////////////////////////
+    uint256 public maxcap;      // sale hardcap
+    uint256 public exceed;      // indivisual hardcap
+    uint256 public minimum;     // indivisual softcap
+    uint256 public rate;        // exchange rate
+
+    uint256 public startTime;     // sale startTime
+    uint256 public endTime;       // sale endTime
+    bool public paused = false;   // is sale paused?
+    bool public ignited = false;  // is sale started?
+    uint256 public weiRaised;     // check sale status
+
     address public wallet;      // wallet for withdrawal
     address public distributor; // contract for release, refund
-    Whitelist public List; // whitelist
+    Whitelist public List;      // whitelist
+    ERC20 public Token;         // token
 
     constructor (
         //////////////////////////
@@ -139,21 +48,23 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
         //////////////////////////
     )
         public
-        Crowdsale(
-            _maxcap,
-            _exceed,
-            _minimum,
-            _rate,
-            _token
-        )
-        Timed(
-            _startTime,
-            _endTime
-        )
     {
         require(_wallet != address(0), "given address is empty (_wallet)");
         require(_whitelist != address(0), "given address is empty (_whitelist)");
         require(_distributor != address(0), "given address is empty (_distributor)");
+        require(_token != address(0), "given address is empty (_token)");
+
+        require(_startTime > 0, "cannot set startTime under zero");
+        require(_endTime > 0, "cannot set endTime under zero");
+        require(_startTime < _endTime, "cannot set startTime after endTime");
+
+        maxcap = _maxcap;
+        exceed = _exceed;
+        minimum = _minimum;
+        rate = _rate;
+
+        weiRaised = 0;
+        Token = ERC20(_token);
 
         wallet = _wallet;
         distributor = _distributor;
@@ -167,26 +78,92 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
     }
 
 ////////////////////////////////////
-//  setter
+//  time
 ////////////////////////////////////
+    event startTimeChanged(uint256 _time);
+    event endTimeChanged(uint256 _time);
+
+    function setStartTime(uint256 _time) external onlyOwner {
+        require(paused && !ignited, "cannot change startTime while sale on progress");
+        require(_time > now, "cannot set startTime to past");
+        require(_time < endTime, "cannot set startTime after endTime");
+
+        startTime = _time;
+        emit startTimeChanged(_time);
+    }
+
+    function setEndTime(uint256 _time) external onlyOwner {
+        require(paused && !ignited, "cannot change endTime while sale on progress");
+        require(_time > now, "cannot set endTime to past");
+        require(_time > startTime, "cannot set endTime before startTime");
+
+        endTime = _time;
+        emit endTimeChanged(_time);
+    }
+
+////////////////////////////////////
+//  address
+////////////////////////////////////
+    event Change(address _addr, string _name);
+
     function setWhitelist(address _whitelist) external onlyOwner {
+        require(paused && !ignited, "cannot change whitelist while sale on progress");
         require(_whitelist != address(0), "given address is empty (_whitelist)");
+
         List = Whitelist(_whitelist);
+        emit Change(_whitelist, "whitelist");
     }
 
     function setDistributor(address _distributor) external onlyOwner {
+        require(paused && !ignited, "cannot change distributor while sale on progress");
         require(_distributor != address(0), "given address is empty (_distributor)");
+
         distributor = _distributor;
+        emit Change(_distributor, "distributor");
+
     }
 
     function setWallet(address _wallet) external onlyOwner {
+        require(paused && !ignited, "cannot change wallet while sale on progress");
         require(_wallet != address(0), "given address is empty (_wallet)");
+
         wallet = _wallet;
+        emit Change(_wallet, "wallet");
+    }
+
+////////////////////////////////////
+//  sale controller
+////////////////////////////////////
+    event Pause();
+    event Unpause();
+    event Ignite();
+    event Extinguish();
+
+    function pause() external onlyOwner {
+        paused = true;
+        emit Pause();
+    }
+
+    function unpause() external onlyOwner {
+        paused = false;
+        emit Unpause();
+    }
+
+    function ignite() external onlyOwner {
+        ignited = true;
+        emit Ignite();
+    }
+
+    function extinguish() external onlyOwner {
+        ignited = false;
+        emit Extinguish();
     }
 
 ////////////////////////////////////
 //  collect eth
 ////////////////////////////////////
+    event Purchase(address indexed _buyer, uint256 _price, uint256 _tokens);
+
     mapping (address => uint256) public buyers;
     address[] public keys;
 
@@ -198,7 +175,7 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
      * @dev collect ether from buyer
      */
     function collect() public payable {
-        require(paused && ignited, "not yet");
+        require(!paused && ignited, "sale finished");
         require(List.whitelist(msg.sender), "current buyer is not in whitelist [buyer]");
 
         // prevent purchase delegation
@@ -211,13 +188,13 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
         uint256 purchase;
         uint256 refund;
 
-        (purchase, refund)= getPurchaseAmount(buyer);
+        (purchase, refund) = getPurchaseAmount(buyer);
 
         // buy
         uint256 tokenAmount = purchase.mul(rate);
         weiRaised = weiRaised.add(purchase);
 
-        if(weiRaised >= maxcap) delegateExtinguish();
+        if(weiRaised >= maxcap) ignited = false;
 
         // wallet
         buyers[buyer] = buyers[buyer].add(purchase);
@@ -238,7 +215,8 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
         require(_buyer != address(0), "given address is empty (_buyer)");
         require(buyers[_buyer].add(msg.value) > minimum, "cannot buy under minimum");
         require(buyers[_buyer] < exceed, "cannot buy over exceed");
-        require(weiRaised < maxcap, "hardcap is already filled");
+        require(weiRaised < maxcap, "sale finished (maxcap)");
+        require(now >= endTime, "sale finished (time)");
     }
 
     /**
@@ -334,6 +312,9 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
 ////////////////////////////////////
 //  release & release
 ////////////////////////////////////
+    event Release(address indexed _to, uint256 _amount);
+    event Refund(address indexed _to, uint256 _amount);
+
     /**
      * @dev release token to buyer
      * @param _addr The address that owner want to release token
@@ -341,7 +322,7 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
     function release(address _addr) external returns (bool) {
         require(!ignited, "sale is not over");
         require(!finalized, "already finalized [release()]");
-        require(msg.sender == distributor, "invalid sender [release()]");
+        require(msg.sender == distributor, "invalid sender [release()]"); // only for distributor
         require(_addr != address(0), "given address is empty (_addr)");
 
         if(buyers[_addr] == 0) return false;
@@ -360,7 +341,7 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
     function refund(address _addr) external returns (bool) {
         require(!ignited, "sale is not over");
         require(!finalized, "already finalized [refund()]");
-        require(msg.sender == distributor, "invalid sender [refund()]");
+        require(msg.sender == distributor, "invalid sender [refund()]"); // only for distributor
         require(_addr != address(0), "given address is empty (_addr)");
 
         if(buyers[_addr] == 0) return false;
@@ -375,6 +356,9 @@ contract PresaleSecond is Timed, Controlled, Crowdsale {
 ////////////////////////////////////
 //  withdraw
 ////////////////////////////////////
+    event WithdrawToken(address indexed _from, uint256 _amount);
+    event WithdrawEther(address indexed _from, uint256 _amount);
+
     /**
      * @dev withdraw token to specific wallet
      */
