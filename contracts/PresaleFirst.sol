@@ -22,7 +22,7 @@ contract PresaleFirst is Whitelist, Pausable {
     address public wallet;
     ERC20 public token;
 
-    function PresaleFirst (
+    constructor (
         uint256 _startNumber,
         uint256 _endNumber,
         address _wallet,
