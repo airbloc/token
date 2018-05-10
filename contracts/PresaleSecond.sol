@@ -2,12 +2,14 @@ pragma solidity 0.4.23;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+// Delete this on deploy
+import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Whitelist.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
-contract PresaleSecond {
+contract PresaleSecond is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
 
@@ -167,7 +169,7 @@ contract PresaleSecond {
     mapping (address => uint256) public buyers;
     address[] public keys;
 
-    function getKeyLength() external returns (uint256) {
+    function getKeyLength() external view returns (uint256) {
         return keys.length;
     }
 
@@ -181,7 +183,11 @@ contract PresaleSecond {
         // prevent purchase delegation
         address buyer = msg.sender;
 
-        preValidate(buyer);
+        require(buyer != address(0), "given address is empty (_buyer)");
+        require(buyers[buyer].add(msg.value) > minimum, "cannot buy under minimum");
+        require(buyers[buyer] < exceed, "cannot buy over exceed");
+        require(weiRaised < maxcap, "sale finished (maxcap)");
+        require(now >= endTime, "sale finished (time)");
 
         if(buyers[buyer] == 0) keys.push(buyer);
 
@@ -207,18 +213,6 @@ contract PresaleSecond {
 ////////////////////////////////////
 //  util functions for collect
 ////////////////////////////////////
-    /**
-     * @dev validate current status
-     * @param _buyer The address that tries to purchase
-     */
-    function preValidate(address _buyer) {
-        require(_buyer != address(0), "given address is empty (_buyer)");
-        require(buyers[_buyer].add(msg.value) > minimum, "cannot buy under minimum");
-        require(buyers[_buyer] < exceed, "cannot buy over exceed");
-        require(weiRaised < maxcap, "sale finished (maxcap)");
-        require(now >= endTime, "sale finished (time)");
-    }
-
     /**
      * D1 = 세일총량 - 세일판매량
      * D2 = 개인최대 - 선입금량
@@ -251,7 +245,7 @@ contract PresaleSecond {
 
     function min(uint256 _a, uint256 _b)
         private
-        view
+        pure
         returns (uint256)
     {
         return (_a > _b) ? _b : _a;

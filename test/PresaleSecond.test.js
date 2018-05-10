@@ -30,8 +30,9 @@ contract('PresaleSecond', function (accounts) {
     const owner = accounts[1]
     const wallet = accounts[2]
     const distributor = accounts[3]
-    const fraud = accounts[4]
-    const buyers = accounts.slice(5, 10)
+    const buyers = accounts.slice(4, 10)
+    const test = accounts[11]
+    const fraud = accounts[12]
 
     const maxcap = 20
     const exceed = 10
@@ -70,62 +71,76 @@ contract('PresaleSecond', function (accounts) {
 
     // before ignite
     describe('before sale', () => {
-        describe('owner', () => {
-            describe('startTime', () => {
-                it('can set startTime', async () => {
-                    const before = this.sale.startTime
-                    await this.sale.setStartTime(
-                        this.startTime +
-                        duration.days(1)
-                    ).should.be.fulfilled
-                    const after = this.sale.startTime
-                })
-
-                it('cannot set startTime to past', async () => {
-                    await this.sale.setStartTime(
-                        latestTime() -
-                        duration.days(1)
-                    ).should.be.rejected
-                })
-
-                it('cannot set startTime after endTime', async () => {
-                    await this.sale.setStartTime(
-                        this.endTime +
-                        duration.days(1)
-                    ).should.be.rejected
-                })
-            }
-
-            describe('endTime', () => {
-                it('can set endTime', async () => {
-                    const before = this.sale.endTime
-                    await this.sale.setEndTime(
-                        this.startTime +
-                        duration.days(1)
-                    ).should.be.fulfilled
-                    const after = this.sale.endTime
-                })
-
-                it('cannot set endTime to past', async () => {
-                    await this.sale.setEndTime(
-                        latestTime() -
-                        duration.days(1)
-                    ).should.be.rejected
-                })
-
-                it('cannot set endTime before startTime', async () => {
-                    await this.sale.setEndTime(
-                        this.startTime -
-                        duration.days(1)
-                    ).should.be.rejected
-                })
+        describe('settings', () => {
+            // Start time
+            it('owner can set startTime', async () => {
+                const before = this.sale.startTime.call()
+                await this.sale.setStartTime(
+                    this.startTime +
+                    duration.days(1)
+                ).should.be.fulfilled
+                const after = this.sale.startTime.call()
+                after.should.not.be.equal(before)
             })
 
-            it('can change whitelist contract', async () => {
+            it('owner cannot set startTime to past', async () => {
+                await this.sale.setStartTime(
+                    latestTime() -
+                    duration.days(1)
+                ).should.be.rejected
+            })
+
+            it('owner cannot set startTime after endTime', async () => {
+                await this.sale.setStartTime(
+                    this.endTime +
+                    duration.days(1)
+                ).should.be.rejected
+            })
+
+            // End time
+            it('owner can set endTime', async () => {
+                const before = this.sale.endTime
+                await this.sale.setEndTime(
+                    this.startTime +
+                    duration.days(1)
+                ).should.be.fulfilled
+                const after = this.sale.endTime
+                after.should.not.be.equal(before)
+            })
+
+            it('owner cannot set endTime to past', async () => {
+                await this.sale.setEndTime(
+                    latestTime() -
+                    duration.days(1)
+                ).should.be.rejected
+            })
+
+            it('owner cannot set endTime before startTime', async () => {
+                await this.sale.setEndTime(
+                    this.startTime -
+                    duration.days(1)
+                ).should.be.rejected
+            })
+
+            it('owner can change whitelist address', async () => {
                 const list = await Whitelist.new({ from: owner })
                 await list.addAddressToWhitelist(fraud, { from: owner })
                 const isWhitelisted = await this.sale.List.whitelist(fraud)
                 isWhitelisted.should.be.equal(true)
+            })
+
+            it('owner can change distributor', async () => {
+                const before = this.sale.distributor
+                await this.sale.setDistributor(test)
+                const after = this.sale.distributor
+                after.should.not.be.equal(before)
+            })
+
+            it('owner can change wallet', async () => {
+                const before = this.sale.wallet
+                await this.sale.setWallet(test)
+                const after = this.sale.wallet
+                after.should.not.be.equal(before)
             })
         })
     })
