@@ -33,7 +33,7 @@
     "homepage": "https://github.com/airbloc/token#readme",
     "dependencies": {
         "colors": "^1.2.4",
-        "openzeppelin-solidity": "^1.9.0"
+        "openzeppelin-solidity": "git+https://github.com/OpenZeppelin/openzeppelin-solidity.git"
     },
     "devDependencies": {
         "babel-polyfill": "^6.26.0",
