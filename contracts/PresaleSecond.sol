@@ -2,7 +2,6 @@ pragma solidity 0.4.23;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-// Delete this on deploy
 import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Whitelist.sol";
@@ -51,14 +50,14 @@ contract PresaleSecond is Ownable {
     )
         public
     {
-        require(_wallet != address(0), "given address is empty (_wallet)");
-        require(_whitelist != address(0), "given address is empty (_whitelist)");
-        require(_distributor != address(0), "given address is empty (_distributor)");
-        require(_token != address(0), "given address is empty (_token)");
+        require(_wallet != address(0));
+        require(_whitelist != address(0));
+        require(_distributor != address(0));
+        require(_token != address(0));
 
-        require(_startTime > 0, "cannot set startTime under zero");
-        require(_endTime > 0, "cannot set endTime under zero");
-        require(_startTime < _endTime, "cannot set startTime after endTime");
+        require(_startTime > 0);
+        require(_endTime > 0);
+        require(_startTime < _endTime);
 
         maxcap = _maxcap;
         exceed = _exceed;
@@ -86,18 +85,17 @@ contract PresaleSecond is Ownable {
     event endTimeChanged(uint256 _time);
 
     function setStartTime(uint256 _time) external onlyOwner {
-        require(paused && !ignited, "cannot change startTime while sale on progress");
-        require(_time > now, "cannot set startTime to past");
-        require(_time < endTime, "cannot set startTime after endTime");
+        require(!ignited);
+        require(_time > now);
+        require(_time < endTime);
 
         startTime = _time;
         emit startTimeChanged(_time);
     }
 
     function setEndTime(uint256 _time) external onlyOwner {
-        require(paused && !ignited, "cannot change endTime while sale on progress");
-        require(_time > now, "cannot set endTime to past");
-        require(_time > startTime, "cannot set endTime before startTime");
+        require(_time > now);
+        require(_time > startTime);
 
         endTime = _time;
         emit endTimeChanged(_time);
@@ -109,16 +107,14 @@ contract PresaleSecond is Ownable {
     event Change(address _addr, string _name);
 
     function setWhitelist(address _whitelist) external onlyOwner {
-        require(paused && !ignited, "cannot change whitelist while sale on progress");
-        require(_whitelist != address(0), "given address is empty (_whitelist)");
+        require(_whitelist != address(0));
 
         List = Whitelist(_whitelist);
         emit Change(_whitelist, "whitelist");
     }
 
     function setDistributor(address _distributor) external onlyOwner {
-        require(paused && !ignited, "cannot change distributor while sale on progress");
-        require(_distributor != address(0), "given address is empty (_distributor)");
+        require(_distributor != address(0));
 
         distributor = _distributor;
         emit Change(_distributor, "distributor");
@@ -126,8 +122,7 @@ contract PresaleSecond is Ownable {
     }
 
     function setWallet(address _wallet) external onlyOwner {
-        require(paused && !ignited, "cannot change wallet while sale on progress");
-        require(_wallet != address(0), "given address is empty (_wallet)");
+        require(_wallet != address(0));
 
         wallet = _wallet;
         emit Change(_wallet, "wallet");
@@ -167,9 +162,10 @@ contract PresaleSecond is Ownable {
     event Purchase(address indexed _buyer, uint256 _price, uint256 _tokens);
 
     mapping (address => uint256) public buyers;
+    mapping (address => uint256) public indexes;
     address[] public keys;
 
-    function getKeyLength() external view returns (uint256) {
+    function getKeyLength() external returns (uint256) {
         return keys.length;
     }
 
@@ -177,17 +173,18 @@ contract PresaleSecond is Ownable {
      * @dev collect ether from buyer
      */
     function collect() public payable {
-        require(!paused && ignited, "sale finished");
-        require(List.whitelist(msg.sender), "current buyer is not in whitelist [buyer]");
+        require(ignited && !paused);
+        require(List.whitelist[msg.sender]);
 
         // prevent purchase delegation
         address buyer = msg.sender;
 
-        require(buyer != address(0), "given address is empty (_buyer)");
-        require(buyers[buyer].add(msg.value) > minimum, "cannot buy under minimum");
-        require(buyers[buyer] < exceed, "cannot buy over exceed");
-        require(weiRaised < maxcap, "sale finished (maxcap)");
-        require(now >= endTime, "sale finished (time)");
+        require(buyer != address(0));
+        require(buyers[buyer].add(msg.value) >= minimum);
+        require(buyers[buyer] < exceed);
+        require(weiRaised < maxcap);
+        require(now < endTime);
+        require(now > startTime);
 
         if(buyers[buyer] == 0) keys.push(buyer);
 
@@ -245,41 +242,11 @@ contract PresaleSecond is Ownable {
 
     function min(uint256 _a, uint256 _b)
         private
-        pure
+        view
         returns (uint256)
     {
         return (_a > _b) ? _b : _a;
     }
-
-    /**
-     * 1. 입금량 + 판매량 >= 세일 총량
-     *      : 세일 총량 - 판매량 리턴
-     * 2. 입금량 + 선입금량 >= 개인 최대
-     *      : 개인 최대 - 선입금량 리턴
-     * 3. 나머지
-     *      : 입금량 리턴
-     */
-
-    /* function getPurchaseAmount(address _buyer)
-        private
-        view
-        returns (uint256, uint256)
-    {
-        if(checkOver(msg.value.add(weiRaised), maxcap))
-            return maxcap.sub(weiRaised);
-        else if(checkOver(msg.value.add(buyers[_buyer]), exceed))
-            return exceed.sub(buyers[_buyer]);
-        else
-            return msg.value;
-    }
-
-    function checkOver(uint256 a, uint256 b)
-        private
-        view
-        returns (bool)
-    {
-        return a >= b;
-    } */
 
 ////////////////////////////////////
 //  finalize
@@ -293,8 +260,7 @@ contract PresaleSecond is Ownable {
      * @dev finalize sale and withdraw everything (token, ether)
      */
     function finalize() external onlyOwner {
-        require(!ignited, "sale is not over");
-        require(!finalized, "already finalized [finalized()]");
+        require(!ignited && !finalized);
 
         // send ether and token to dev wallet
         withdrawEther();
@@ -314,16 +280,16 @@ contract PresaleSecond is Ownable {
      * @param _addr The address that owner want to release token
      */
     function release(address _addr) external returns (bool) {
-        require(!ignited, "sale is not over");
-        require(!finalized, "already finalized [release()]");
-        require(msg.sender == distributor, "invalid sender [release()]"); // only for distributor
-        require(_addr != address(0), "given address is empty (_addr)");
+        require(!ignited && !finalized);
+        require(msg.sender == distributor); // only for distributor
+        require(_addr != address(0));
 
         if(buyers[_addr] == 0) return false;
 
         Token.safeTransfer(_addr, buyers[_addr].mul(rate));
         emit Release(_addr, buyers[_addr].mul(rate));
 
+        // TODO 동작하는지 확인
         delete buyers[_addr];
         return true;
     }
@@ -333,16 +299,16 @@ contract PresaleSecond is Ownable {
      * @param _addr The address that owner want to refund ether
      */
     function refund(address _addr) external returns (bool) {
-        require(!ignited, "sale is not over");
-        require(!finalized, "already finalized [refund()]");
-        require(msg.sender == distributor, "invalid sender [refund()]"); // only for distributor
-        require(_addr != address(0), "given address is empty (_addr)");
+        require(!ignited && !finalized);
+        require(msg.sender == distributor); // only for distributor
+        require(_addr != address(0));
 
         if(buyers[_addr] == 0) return false;
 
         _addr.transfer(buyers[_addr]);
         emit Refund(_addr, buyers[_addr]);
 
+        // TODO 동작하는지 확인
         delete buyers[_addr];
         return true;
     }

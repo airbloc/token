@@ -30,6 +30,7 @@ const PresaleSecond = artifacts.require('PresaleSecond')
 module.exports = async (deployer, network, accounts) => {
     const owner = accounts[0]
 
+    /*
     if(network == "development") {
         // whitelist
         await deployer.deploy(Whitelist)
@@ -59,11 +60,12 @@ module.exports = async (deployer, network, accounts) => {
             Whitelist.address,
             MintableToken.address
         )
-    }
 
-    console.log(colors.red("============================ !!Check List!! ============================"))
-    console.log(colors.yellow("=> Contract owner           ") + ": " + colors.cyan(owner.toString()))
-    console.log(colors.yellow("=> Whitelist address        ") + ": " + colors.cyan(Whitelist.address))
-    console.log(colors.yellow("=> PresaleSecond address    ") + ": " + colors.cyan(PresaleSecond.address))
-    console.log(colors.red("========================================================================"))
+        console.log(colors.red("============================ !!Check List!! ============================"))
+        console.log(colors.yellow("=> Contract owner           ") + ": " + colors.cyan(owner.toString()))
+        console.log(colors.yellow("=> Whitelist address        ") + ": " + colors.cyan(Whitelist.address))
+        console.log(colors.yellow("=> PresaleSecond address    ") + ": " + colors.cyan(PresaleSecond.address))
+        console.log(colors.red("========================================================================"))
+    }
+    */
 }
