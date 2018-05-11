@@ -11,7 +11,7 @@
         "ganache-run": "docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 50 -e 1000000",
         "ganache-stop": "docker rm -f ganache",
         "export": "npm run ganache-run; truffle export abi; npm run ganache-stop",
-        "test": "npm run ganache-run; truffle test --show-events; npm run ganache-stop",
+        "test": "npm run ganache-run; truffle test; npm run ganache-stop",
         "test:ropsten": "truffle test --network ropsten",
         "test:rinkeby": "truffle test --network rinkeby",
         "migrate": "truffle migrate --network development --reset",
@@ -33,7 +33,7 @@
     "homepage": "https://github.com/airbloc/token#readme",
     "dependencies": {
         "colors": "^1.2.4",
-        "openzeppelin-solidity": "^1.9.0"
+        "openzeppelin-solidity": "git+https://github.com/OpenZeppelin/openzeppelin-solidity.git"
     },
     "devDependencies": {
         "babel-polyfill": "^6.26.0",
