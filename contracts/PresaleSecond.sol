@@ -55,6 +55,7 @@ contract PresaleSecond is Ownable {
 
         Token = ERC20(_token);
         List = Whitelist(_whitelist);
+        keys.push(address(0));
     }
 
     /* fallback function */
@@ -128,13 +129,13 @@ contract PresaleSecond is Ownable {
     }
 
     function collect() public payable {
-        require(ignited && !paused);
-        require(List.whitelist(msg.sender));
-
         address buyer = msg.sender;
+        uint256 amount = msg.value;
 
+        require(ignited && !paused);
+        require(List.whitelist(buyer));
         require(buyer != address(0));
-        require(buyers[buyer].add(msg.value) >= minimum);
+        require(buyers[buyer].add(amount) >= minimum);
         require(buyers[buyer] < exceed);
         require(weiRaised < maxcap);
 
@@ -143,7 +144,7 @@ contract PresaleSecond is Ownable {
         uint256 purchase;
         uint256 refund;
 
-        (purchase, refund) = getPurchaseAmount(buyer);
+        (purchase, refund) = getPurchaseAmount(buyer, amount);
 
         weiRaised = weiRaised.add(purchase);
 
@@ -156,7 +157,7 @@ contract PresaleSecond is Ownable {
     }
 
 //  util functions for collect
-    function getPurchaseAmount(address _buyer)
+    function getPurchaseAmount(address _buyer, uint256 _amount)
         private
         view
         returns (uint256, uint256)
@@ -164,20 +165,11 @@ contract PresaleSecond is Ownable {
         uint256 d1 = maxcap.sub(weiRaised);
         uint256 d2 = exceed.sub(buyers[_buyer]);
 
-        uint256 refund = msg.value.sub(min(d1, d2));
+        uint256 d = (d1 > d2) ? d2 : d1;
 
-        if(refund > 0)
-            return (msg.value.sub(refund) ,refund);
-        else
-            return (msg.value, 0);
-    }
-
-    function min(uint256 _a, uint256 _b)
-        private
-        pure
-        returns (uint256)
-    {
-        return (_a > _b) ? _b : _a;
+        if(_amount > d)
+            return (d, _amount.sub(d));
+        return (_amount, 0);
     }
 
 //  finalize
@@ -209,8 +201,7 @@ contract PresaleSecond is Ownable {
         Token.safeTransfer(_addr, buyers[_addr].mul(rate));
         emit Release(_addr, buyers[_addr].mul(rate));
 
-        // TODO 동작하는지 확인
-        delete buyers[_addr];
+        buyers[_addr] = 0;
         return true;
     }
 
@@ -231,8 +222,7 @@ contract PresaleSecond is Ownable {
         _addr.transfer(buyers[_addr]);
         emit Refund(_addr, buyers[_addr]);
 
-        // TODO 동작하는지 확인
-        delete buyers[_addr];
+        buyers[_addr] = 0;
         return true;
     }
 
@@ -246,6 +236,7 @@ contract PresaleSecond is Ownable {
      * @dev withdraw token to specific wallet
      */
     function withdrawToken() public onlyOwner {
+        require(!ignited);
         Token.safeTransfer(wallet, Token.balanceOf(address(this)));
         emit WithdrawToken(wallet, Token.balanceOf(address(this)));
     }
@@ -254,6 +245,7 @@ contract PresaleSecond is Ownable {
      * @dev withdraw ether to specific wallet
      */
     function withdrawEther() public onlyOwner {
+        require(!ignited);
         wallet.transfer(address(this).balance);
         emit WithdrawEther(wallet, address(this).balance);
     }
