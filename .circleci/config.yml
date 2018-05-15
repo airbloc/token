@@ -17,7 +17,7 @@ jobs:
       - run:
           name: Install Truffle
           command: |
-            sudo npm install -E zeppelin-solidity
+            sudo npm install -E https://github.com/OpenZeppelin/openzeppelin-solidity
             sudo npm install -g truffle
 
       - run:
