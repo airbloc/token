@@ -30,7 +30,6 @@ const PresaleSecond = artifacts.require('PresaleSecond')
 module.exports = async (deployer, network, accounts) => {
     const owner = accounts[0]
 
-    /*
     if(network == "development") {
         // whitelist
         await deployer.deploy(Whitelist)
@@ -67,5 +66,4 @@ module.exports = async (deployer, network, accounts) => {
         console.log(colors.yellow("=> PresaleSecond address    ") + ": " + colors.cyan(PresaleSecond.address))
         console.log(colors.red("========================================================================"))
     }
-    */
 }

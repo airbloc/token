@@ -19,7 +19,7 @@ contract PresaleSecond is Ownable {
 
     bool public paused = false;   // is sale paused?
     bool public ignited = false;  // is sale started?
-    uint256 public weiRaised = 0;     // check sale status
+    uint256 public weiRaised = 0; // check sale status
 
     address public wallet;      // wallet for withdrawal
     address public distributor; // contract for release, refund
@@ -31,10 +31,8 @@ contract PresaleSecond is Ownable {
         uint256 _exceed,
         uint256 _minimum,
         uint256 _rate,
-
         address _wallet,
         address _distributor,
-
         address _whitelist,
         address _token
     )
@@ -55,7 +53,6 @@ contract PresaleSecond is Ownable {
 
         Token = ERC20(_token);
         List = Whitelist(_whitelist);
-        keys.push(address(0));
     }
 
     /* fallback function */
@@ -118,15 +115,6 @@ contract PresaleSecond is Ownable {
     event Purchase(address indexed _buyer, uint256 _purchased, uint256 _refund, uint256 _tokens);
 
     mapping (address => uint256) public buyers;
-    address[] public keys;
-
-    function getKeyLength()
-        external
-        view
-        returns (uint256)
-    {
-        return keys.length;
-    }
 
     function collect() public payable {
         address buyer = msg.sender;
@@ -138,8 +126,6 @@ contract PresaleSecond is Ownable {
         require(buyers[buyer].add(amount) >= minimum);
         require(buyers[buyer] < exceed);
         require(weiRaised < maxcap);
-
-        if(buyers[buyer] == 0) keys.push(buyer);
 
         uint256 purchase;
         uint256 refund;
@@ -167,9 +153,7 @@ contract PresaleSecond is Ownable {
 
         uint256 d = (d1 > d2) ? d2 : d1;
 
-        if(_amount > d)
-            return (d, _amount.sub(d));
-        return (_amount, 0);
+        return (_amount > d) ? (d, _amount.sub(d)) : (_amount, 0);
     }
 
 //  finalize
@@ -205,10 +189,8 @@ contract PresaleSecond is Ownable {
         return true;
     }
 
-    /**
-     * @dev refund ether to buyer
-     * @param _addr The address that owner want to refund ether
-     */
+    // 어떤 모종의 이유로 환불 절차를 밟아야 하는 경우를 상정하여 만들어놓은 안전장치입니다.
+    // This exists for safety when we have to run refund process some reason.
     function refund(address _addr)
         external
         returns (bool)
@@ -226,24 +208,16 @@ contract PresaleSecond is Ownable {
         return true;
     }
 
-////////////////////////////////////
 //  withdraw
-////////////////////////////////////
     event WithdrawToken(address indexed _from, uint256 _amount);
     event WithdrawEther(address indexed _from, uint256 _amount);
 
-    /**
-     * @dev withdraw token to specific wallet
-     */
     function withdrawToken() public onlyOwner {
         require(!ignited);
         Token.safeTransfer(wallet, Token.balanceOf(address(this)));
         emit WithdrawToken(wallet, Token.balanceOf(address(this)));
     }
 
-    /**
-     * @dev withdraw ether to specific wallet
-     */
     function withdrawEther() public onlyOwner {
         require(!ignited);
         wallet.transfer(address(this).balance);
