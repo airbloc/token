@@ -1,7 +1,7 @@
 Airbloc Token Contract
 ===================
 
-[![CircleCI](https://circleci.com/gh/airbloc/token/tree/master.svg?style=svg)](https://circleci.com/gh/airbloc/token/tree/master)
+[![CircleCI](https://circleci.com/gh/frostornge/token.svg?style=svg)](https://circleci.com/gh/frostornge/token)
 
 This is contract of airbloc token.
 
