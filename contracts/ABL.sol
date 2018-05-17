@@ -12,7 +12,7 @@ contract OwnableToken {
         _;
     }
 
-    function OwnableToken() public {
+    constructor() public {
         owners[msg.sender] = true;
     }
 
@@ -121,7 +121,7 @@ contract BasicToken is ERC20Basic {
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -261,7 +261,7 @@ contract ABL is StandardToken, OwnableToken {
     // (to prevent OTC before the token to be listed on exchanges)
     bool isTransferable = false;
 
-    function ABL(
+    constructor(
         address _dtb,
         address _dev
     ) public {
@@ -317,11 +317,11 @@ contract ABL is StandardToken, OwnableToken {
         require(_amount >= 0);
         require(_amount <= balances[msg.sender]);
 
-        totalSupply = totalSupply.sub(_amount.mul(10 ** uint256(decimals)));
-        balances[msg.sender] = balances[msg.sender].sub(_amount.mul(10 ** uint256(decimals)));
+        totalSupply = totalSupply.sub(_amount);
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
 
-        emit Burn(msg.sender, _amount.mul(10 ** uint256(decimals)));
-        emit Transfer(msg.sender, address(0), _amount.mul(10 ** uint256(decimals)));
+        emit Burn(msg.sender, _amount);
+        emit Transfer(msg.sender, address(0), _amount);
     }
 
     event Mint(address indexed _to, uint256 _amount);

@@ -9,8 +9,8 @@ require('chai')
     .use(require('chai-bignumber')(BigNumber))
     .should()
 
-const MintableToken = artifacts.require('MintableToken')
 const Whitelist = artifacts.require('Whitelist')
+const MintableToken = artifacts.require('MintableToken')
 const PresaleSecond = artifacts.require('PresaleSecond')
 
 // constructor (
@@ -33,7 +33,6 @@ contract('PresaleSecond', function (accounts) {
     const buyers = accounts.slice(4, 11)
     const test = accounts[10]
     const fraud = accounts[11]
-    console.log("num of buyers", buyers.length)
 
     let token;
     let sale;
