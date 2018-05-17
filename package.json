@@ -8,16 +8,21 @@
     },
     "scripts": {
         "lint": "solium --watch --dir contracts",
+
         "ganache-run": "docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 50 -e 1000000",
         "ganache-stop": "docker rm -f ganache",
+
         "export": "npm run ganache-run; truffle export abi; npm run ganache-stop",
+
         "test": "npm run ganache-run; truffle test; npm run ganache-stop",
         "test:ropsten": "truffle test --network ropsten",
         "test:rinkeby": "truffle test --network rinkeby",
+
         "migrate": "truffle migrate --network development --reset",
         "migrate:ropsten": "truffle migrate --network ropsten --reset",
         "migrate:rinkeby": "truffle migrate --network rinkeby --reset",
         "migrate:mainnet": "truffle migrate --network main --reset",
+
         "console": "npm run ganache-run; npm run migrate; truffle console; npm run ganache-stop"
     },
     "repository": {

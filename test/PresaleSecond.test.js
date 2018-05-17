@@ -73,6 +73,20 @@ contract('PresaleSecond', function (accounts) {
     })
 
     describe('settings', () => {
+        it('fraud cannot change whitelist address', async () => {
+            const list = await Whitelist.new({ from: fraud })
+            await list.addAddressToWhitelist(test, { from: fraud })
+            await sale.setWhitelist(list.address, { from: fraud }).should.be.rejected
+        })
+
+        it('fraud cannot change distributor', async () => {
+            await sale.setDistributor(test, { from: fraud }).should.be.rejected
+        })
+
+        it('fraud cannot change wallet', async () => {
+            await sale.setWallet(test, { from: fraud }).should.be.rejected
+        })
+
         it('owner can change whitelist address', async () => {
             const before = await sale.List.call()
             const list = await Whitelist.new({ from: owner })
@@ -85,7 +99,7 @@ contract('PresaleSecond', function (accounts) {
             after.should.be.equal(list.address)
 
             await sale.ignite({ from: owner })
-            await sale.collect({ from: fraud, value: ether(2) }).should.be.fulfilled
+            await sale.sendTransaction({ from: fraud, value: ether(2) }).should.be.fulfilled
             const raised = await sale.weiRaised.call()
             raised.should.be.bignumber.equal(ether(2))
             await sale.extinguish({ from: owner })
@@ -112,18 +126,77 @@ contract('PresaleSecond', function (accounts) {
         })
     })
 
-    describe('sale', () => {
+    describe('control sale', () => {
+        it('fraud cannot pause/resume sale', async () => {
+            let paused;
+
+            await sale.pause({ from: fraud }).should.be.rejected
+            paused = await sale.paused.call()
+            paused.should.be.equal(false)
+
+            await sale.resume({ from: fraud }).should.be.rejected
+            paused = await sale.paused.call()
+            paused.should.be.equal(false)
+        })
+
+        it('fraud cannot ignite/extinguish sale', async () => {
+            let ignited;
+
+            await sale.ignite({ from: fraud}).should.be.rejected
+            ignited = await sale.ignited.call()
+            ignited.should.be.equal(false)
+
+            await sale.extinguish({ from: fraud }).should.be.rejected
+            ignited = await sale.ignited.call()
+            ignited.should.be.equal(false)
+        })
+
+        it('owner can pause/resume sale', async () => {
+            let paused;
+
+            await sale.pause({ from: owner }).should.be.fulfilled
+            paused = await sale.paused.call()
+            paused.should.be.equal(true)
+
+            await sale.resume({ from: owner }).should.be.fulfilled
+            paused = await sale.paused.call()
+            paused.should.be.equal(false)
+        })
+
+        it('owner can ignite/extinguish sale', async () => {
+            let ignited;
+
+            await sale.ignite({ from: owner}).should.be.fulfilled
+            ignited = await sale.ignited.call()
+            ignited.should.be.equal(true)
+
+            await sale.extinguish({ from: owner }).should.be.fulfilled
+            ignited = await sale.ignited.call()
+            ignited.should.be.equal(false)
+        })
+    })
+
+    describe('collect ether', () => {
         beforeEach(async () => {
             await sale.ignite({ from: owner })
         })
 
-        // maxcap = 25ETH
-        it('over maxcap', async () => {
+        it('non whitelisted buyer cannot buy token', async () => {
+            await sale.sendTransaction({ from: fraud, value: ether(2000) }).should.be.rejected
+        })
+
+        it('buyer cannot buy under minimum', async () => {
             for (let buyer of buyers)
-                await sale.collect({ from: buyer, value: ether(3.5) }) //= weiRaised 24.5ETH
+                await sale.sendTransaction({ from: buyer, value: ether(0.3) }).should.be.rejected
+        })
+
+        // maxcap = 25ETH
+        it('buyer cannot buy over maxcap', async () => {
+            for (let buyer of buyers)
+                await sale.sendTransaction({ from: buyer, value: ether(3.5) }) //= weiRaised 24.5ETH
 
             const before = await web3.eth.getBalance(test)
-            await sale.collect({ from: test, value: ether(2.5) }) //= 27ETH
+            await sale.sendTransaction({ from: test, value: ether(2.5) }) //= 27ETH
             const after = await web3.eth.getBalance(test)
             console.log("B: ", before)
             console.log("A: ", after)
@@ -131,24 +204,24 @@ contract('PresaleSecond', function (accounts) {
         })
 
         // exceed = 15ETH
-        it('over exceed', async () => {
+        it('buyer cannot buy over exceed', async () => {
             for (let buyer of buyers)
-                await sale.collect({ from: buyer, value: ether(2) }) //= weiRaised 14ETH
+                await sale.sendTransaction({ from: buyer, value: ether(2) }) //= weiRaised 14ETH
 
             const before = await web3.eth.getBalance(test)
-            await sale.collect({ from: test, value: ether(20) })
+            await sale.sendTransaction({ from: test, value: ether(20) })
             const after = await web3.eth.getBalance(test)
             console.log("B: ", before)
             console.log("A: ", after)
             before.minus(after).should.be.bignumber.above(ether(11)) //= refund 9ETH
         })
 
-        it('over both', async () => {
+        it('buyer cannot buy over both', async () => {
             for (let buyer of buyers)
-                await sale.collect({ from: buyer, value: ether(3) }) //= weiRaised 21ETH
+                await sale.sendTransaction({ from: buyer, value: ether(3) }) //= weiRaised 21ETH
 
             const before = await web3.eth.getBalance(test)
-            await sale.collect({ from: test, value: ether(20) })
+            await sale.sendTransaction({ from: test, value: ether(20) })
             const after = await web3.eth.getBalance(test)
             console.log("B: ", before)
             console.log("A: ", after)
@@ -157,13 +230,31 @@ contract('PresaleSecond', function (accounts) {
     })
 
     describe('distribution', () => {
+        beforeEach(async () => {
+            await sale.ignite({ from: owner })
+
+            for (let buyer of buyers)
+                await sale.sendTransaction({ from: buyer, value: ether(3) })
+        })
+
+        it('fraud cannot release token', async () => {
+            await sale.release(test, { from: fraud }).should.be.rejected
+        })
+
+        it('fraud cannot refund token', async () => {
+            await sale.refund(test, { from: fraud }).should.be.rejected
+        })
+
+        it('fraud cannot withdraw token', async () => {
+            await sale.withdrawToken({ from: fraud }).should.be.rejected
+        })
+
+        it('fraud cannot withdraw ether', async () => {
+            await sale.withdrawEther({ from: fraud }).should.be.rejected
+        })
+
         describe('when not on sale', () => {
             beforeEach(async () => {
-                await sale.ignite({ from: owner })
-
-                for (let buyer of buyers)
-                    await sale.collect({ from: buyer, value: ether(3) })
-
                 await sale.extinguish({ from: owner })
             })
 
@@ -209,13 +300,6 @@ contract('PresaleSecond', function (accounts) {
         })
 
         describe('when on sale', () => {
-            beforeEach(async () => {
-                await sale.ignite({ from: owner })
-
-                for (let buyer of buyers)
-                    await sale.collect({ from: buyer, value: ether(3) })
-            })
-
             it('distributor cannot release token', async () => {
                 for (let buyer of buyers)
                     await sale.release(buyer, { from: distributor }).should.be.rejected

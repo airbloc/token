@@ -191,7 +191,7 @@ contract PresaleSecond is Ownable {
     }
 
     // 어떤 모종의 이유로 환불 절차를 밟아야 하는 경우를 상정하여 만들어놓은 안전장치입니다.
-    // This exists for safety when we have to run refund process some reason.
+    // This exists for safety when we have to run refund process by some reason.
     function refund(address _addr)
         external
         returns (bool)

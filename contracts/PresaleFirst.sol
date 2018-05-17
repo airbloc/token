@@ -80,7 +80,7 @@ contract PresaleFirst is Whitelist, Pausable {
 //  validation functions for collect
 //////////////////
 
-    function preValidation() private constant returns (bool) {
+    function preValidation() private view returns (bool) {
         // check minimum
         bool a = msg.value >= minimum;
 
@@ -90,12 +90,12 @@ contract PresaleFirst is Whitelist, Pausable {
         return a && b;
     }
 
-    function getPurchaseAmount(address _buyer) private constant returns (uint256) {
+    function getPurchaseAmount(address _buyer) private view returns (uint256) {
         return checkOverMaxcap(checkOverExceed(_buyer));
     }
 
     // 1. check over exceed
-    function checkOverExceed(address _buyer) private constant returns (uint256) {
+    function checkOverExceed(address _buyer) private view returns (uint256) {
         if(msg.value >= exceed) {
             return exceed;
         } else if(msg.value.add(buyers[_buyer]) >= exceed) {
@@ -106,7 +106,7 @@ contract PresaleFirst is Whitelist, Pausable {
     }
 
     // 2. check sale hardcap
-    function checkOverMaxcap(uint256 amount) private constant returns (uint256) {
+    function checkOverMaxcap(uint256 amount) private view returns (uint256) {
         if((amount + weiRaised) >= maxcap) {
             return (maxcap.sub(weiRaised));
         } else {
