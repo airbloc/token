@@ -34,8 +34,8 @@ contract('PresaleSecond', function (accounts) {
     const test = accounts[10]
     const fraud = accounts[11]
 
-    let token;
-    let sale;
+    let token
+    let sale
 
     const maxcap = 25
     const exceed = 15
@@ -74,7 +74,6 @@ contract('PresaleSecond', function (accounts) {
     describe('settings', () => {
         it('fraud cannot change whitelist address', async () => {
             const list = await Whitelist.new({ from: fraud })
-            await list.addAddressToWhitelist(test, { from: fraud })
             await sale.setWhitelist(list.address, { from: fraud }).should.be.rejected
         })
 
@@ -96,12 +95,6 @@ contract('PresaleSecond', function (accounts) {
             console.log("A: ", after)
             after.should.not.be.equal(before)
             after.should.be.equal(list.address)
-
-            await sale.ignite({ from: owner })
-            await sale.sendTransaction({ from: fraud, value: ether(2) }).should.be.fulfilled
-            const raised = await sale.weiRaised.call()
-            raised.should.be.bignumber.equal(ether(2))
-            await sale.extinguish({ from: owner })
         })
 
         it('owner can change distributor', async () => {
@@ -127,7 +120,7 @@ contract('PresaleSecond', function (accounts) {
 
     describe('control sale', () => {
         it('fraud cannot pause/resume sale', async () => {
-            let paused;
+            let paused
 
             await sale.pause({ from: fraud }).should.be.rejected
             paused = await sale.paused.call()
@@ -139,7 +132,7 @@ contract('PresaleSecond', function (accounts) {
         })
 
         it('fraud cannot ignite/extinguish sale', async () => {
-            let ignited;
+            let ignited
 
             await sale.ignite({ from: fraud}).should.be.rejected
             ignited = await sale.ignited.call()
@@ -318,6 +311,4 @@ contract('PresaleSecond', function (accounts) {
             })
         })
     })
-
-
 })

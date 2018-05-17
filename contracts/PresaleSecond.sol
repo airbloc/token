@@ -185,7 +185,7 @@ contract PresaleSecond is Ownable {
         buyers[_addr] = 0;
 
         Token.safeTransfer(_addr, releaseAmount);
-        emit Release(_addr, buyers[_addr].mul(rate));
+        emit Release(_addr, releaseAmount);
 
         return true;
     }
@@ -206,7 +206,7 @@ contract PresaleSecond is Ownable {
         buyers[_addr] = 0;
 
         _addr.transfer(refundAmount);
-        emit Refund(_addr, buyers[_addr]);
+        emit Refund(_addr, refundAmount);
 
         return true;
     }

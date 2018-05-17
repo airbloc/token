@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./PresaleSecond.sol";
 
 
-contract SaleDistributor is Ownable {
+contract SaleManager is Ownable {
     PresaleSecond public Sale;
 
     constructor(address _sale) public {
@@ -22,6 +22,14 @@ contract SaleDistributor is Ownable {
 
         for(uint256 i = 0; i < _addrs.length; i++) {
             Sale.release(_addrs[i]);
+        }
+    }
+
+    function refundMany(address[] _addrs) external onlyOwner {
+        require(_addrs.length < 30);
+
+        for(uint256 i = 0; i < _addrs.length; i++) {
+            Sale.refund(_addrs[i]);
         }
     }
 }

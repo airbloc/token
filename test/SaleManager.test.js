@@ -12,22 +12,22 @@ require('chai')
 const Whitelist = artifacts.require('Whitelist')
 const MintableToken = artifacts.require('MintableToken')
 const PresaleSecond = artifacts.require('PresaleSecond')
-const SaleDistributor = artifacts.require('SaleDistributor')
+const SaleManager = artifacts.require('SaleManager')
 
 // constructor(
 //     address _sale
 // )
 
-contract('SaleDistributor', function (accounts) {
+contract('SaleManager', function (accounts) {
     const owner = accounts[1]
     const wallet = accounts[2]
     const test = accounts[3]
     const fraud = accounts[4]
     const buyers = accounts.slice(5, 11)
 
-    let token;
-    let sale;
-    let distributor;
+    let token
+    let sale
+    let manager
 
     const maxcap = 25
     const exceed = 15
@@ -62,31 +62,52 @@ contract('SaleDistributor', function (accounts) {
             ether(maxcap) * rate,
             { from: owner }
         )
-        // Set sale distributor
-        distributor = await SaleDistributor.new(
+        // Set sale manager
+        manager = await SaleManager.new(
             sale.address,
             { from: owner },
         )
 
         await sale.setDistributor(
-            distributor.address,
+            manager.address,
             { from: owner },
         ).should.be.fulfilled
 
         await sale.ignite({ from: owner })
-        let cnt = 1;
+        let cnt = 1
         for (let buyer of buyers)
             await sale.sendTransaction({ from: buyer, value: ether(cnt++) })
         await sale.extinguish({ from: owner })
     })
 
-    it('distribute correctly', async () => {
-        await distributor.releaseMany(buyers, { from: owner })
-        let cnt = 1;
+    it('release correctly', async () => {
+        await manager.releaseMany(buyers, { from: owner })
+        let cnt = 1
         for (let buyer of buyers) {
             const balance = await token.balanceOf(buyer)
             console.log(balance)
             balance.should.be.bignumber.equal(ether(cnt++) * rate)
+        }
+    })
+
+    it('refund correctly', async () => {
+        let beforeBalances = []
+        let cnt
+
+        cnt = 0
+        for (let buyer of buyers) {
+            const balance = await web3.eth.getBalance(buyer)
+            beforeBalances[cnt++] = balance
+        }
+
+        cnt = 0
+        await manager.refundMany(buyers, { from: owner })
+        for (let buyer of buyers) {
+            const after = await web3.eth.getBalance(buyer)
+            const before = beforeBalances[cnt]
+            const diff = after.minus(before)
+            console.log(diff)
+            diff.should.be.bignumber.equal(ether(++cnt))
         }
     })
 })
