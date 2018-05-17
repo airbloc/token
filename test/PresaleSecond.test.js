@@ -134,7 +134,7 @@ contract('PresaleSecond', function (accounts) {
         it('fraud cannot ignite/extinguish sale', async () => {
             let ignited
 
-            await sale.ignite({ from: fraud}).should.be.rejected
+            await sale.ignite({ from: fraud }).should.be.rejected
             ignited = await sale.ignited.call()
             ignited.should.be.equal(false)
 
