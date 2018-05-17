@@ -2,7 +2,6 @@ pragma solidity 0.4.23;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/ownership/Whitelist.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -87,7 +86,7 @@ contract PresaleSecond is Ownable {
 
 //  sale controller
     event Pause();
-    event Unpause();
+    event Resume();
     event Ignite();
     event Extinguish();
 
@@ -96,9 +95,9 @@ contract PresaleSecond is Ownable {
         emit Pause();
     }
 
-    function unpause() external onlyOwner {
+    function resume() external onlyOwner {
         paused = false;
-        emit Unpause();
+        emit Resume();
     }
 
     function ignite() external onlyOwner {
@@ -182,10 +181,12 @@ contract PresaleSecond is Ownable {
 
         if(buyers[_addr] == 0) return false;
 
-        Token.safeTransfer(_addr, buyers[_addr].mul(rate));
+        uint256 releaseAmount = buyers[_addr].mul(rate);
+        buyers[_addr] = 0;
+
+        Token.safeTransfer(_addr, releaseAmount);
         emit Release(_addr, buyers[_addr].mul(rate));
 
-        buyers[_addr] = 0;
         return true;
     }
 
@@ -201,10 +202,12 @@ contract PresaleSecond is Ownable {
 
         if(buyers[_addr] == 0) return false;
 
-        _addr.transfer(buyers[_addr]);
+        uint256 refundAmount = buyers[_addr];
+        buyers[_addr] = 0;
+
+        _addr.transfer(refundAmount);
         emit Refund(_addr, buyers[_addr]);
 
-        buyers[_addr] = 0;
         return true;
     }
 
