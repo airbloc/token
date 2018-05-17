@@ -300,13 +300,11 @@ contract ABL is StandardToken, OwnableToken {
         require(_to != address(0));
         require(_amount >= 0);
 
-        uint256 amount = _amount.mul(10 ** uint256(decimals));
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
 
-        totalSupply = totalSupply.add(amount);
-        balances[_to] = balances[_to].add(amount);
-
-        emit Mint(_to, amount);
-        emit Transfer(address(0), _to, amount);
+        emit Mint(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
 
         return true;
     }
