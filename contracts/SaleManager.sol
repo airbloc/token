@@ -17,19 +17,21 @@ contract SaleManager is Ownable {
         Sale = PresaleSecond(_addr);
     }
 
+    event Fail(address indexed _addr);
+
     function releaseMany(address[] _addrs) external onlyOwner {
         require(_addrs.length < 30);
 
-        for(uint256 i = 0; i < _addrs.length; i++) {
-            Sale.release(_addrs[i]);
-        }
+        for(uint256 i = 0; i < _addrs.length; i++)
+            if (!Sale.release(_addrs[i]))
+                emit Fail(_addrs[i]);
     }
 
     function refundMany(address[] _addrs) external onlyOwner {
         require(_addrs.length < 30);
 
-        for(uint256 i = 0; i < _addrs.length; i++) {
-            Sale.refund(_addrs[i]);
-        }
+        for(uint256 i = 0; i < _addrs.length; i++)
+            if (!Sale.refund(_addrs[i]))
+                emit Fail(_addrs[i]);
     }
 }

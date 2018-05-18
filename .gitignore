@@ -6,4 +6,4 @@ node_modules
 build
 config.local.*
 .vscode/
-test.*
+wallet.*

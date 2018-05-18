@@ -8,21 +8,16 @@
     },
     "scripts": {
         "lint": "solium --watch --dir contracts",
-
         "ganache-run": "docker run --name ganache -d -p 8545:8545 trufflesuite/ganache-cli -a 50",
         "ganache-stop": "docker rm -f ganache",
-
         "export": "npm run ganache-run; truffle export abi; npm run ganache-stop",
-
         "test": "npm run ganache-run; truffle test; npm run ganache-stop",
         "test:ropsten": "truffle test --network ropsten",
         "test:rinkeby": "truffle test --network rinkeby",
-
         "migrate": "npm run ganache-run; truffle migrate --network development --reset; npm run ganache-stop;",
         "migrate:ropsten": "truffle migrate --network ropsten --reset",
         "migrate:rinkeby": "truffle migrate --network rinkeby --reset",
-        "migrate:mainnet": "truffle migrate --network main --reset",
-
+        "migrate:mainnet": "truffle migrate --network mainnet --reset",
         "console": "npm run ganache-run; npm run migrate; truffle console; npm run ganache-stop"
     },
     "repository": {
@@ -51,6 +46,8 @@
         "chai-bignumber": "^2.0.2",
         "solium": "^1.1.7",
         "truffle-hdwallet-provider": "0.0.3",
-        "truffle-ledger-provider": "0.0.1"
+        "truffle-hdwallet-provider-privkey": "git+https://github.com/rhlsthrm/truffle-hdwallet-provider-privkey.git",
+        "truffle-ledger-provider": "0.0.1",
+        "web3": "^1.0.0-beta.34"
     }
 }

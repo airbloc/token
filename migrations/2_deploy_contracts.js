@@ -1,4 +1,6 @@
 const colors = require('colors')
+const fs = require('fs')
+const Web3 = require('web3')
 
 const ETH = 1000000000000000000
 
@@ -57,7 +59,10 @@ const testCase3 = async (presaleSecond, buyers) => {
     await presaleSecond.sendTransaction({ from: buyers[1], value: ether(1) }).should.be.fulfilled
 }
 
-const deployTest = async (deployer, accounts) => {
+const testSale = async (deployer, accounts) => {
+    let startTime
+    let endTime
+
     printBorder()
     const owner = accounts[0]
     const buyers = accounts.slice(1, 6)
@@ -67,6 +72,11 @@ const deployTest = async (deployer, accounts) => {
     const exceed = 0.4
     const minimum = 0.1
     const rate = 11500
+
+    console.log(colors.cyan("========================================================================"))
+    console.log(colors.cyan("============================= Deploy Start ============================="))
+    console.log(colors.cyan("========================================================================"))
+    startTime = Date.now()
 
     await deployer.deploy(Whitelist, { from: owner })
     await deployer.deploy(MintableToken, { from: owner })
@@ -89,7 +99,16 @@ const deployTest = async (deployer, accounts) => {
         { from: owner },
     )
 
+    endTime = Date.now()
+    console.log(colors.cyan("========================================================================"))
+    console.log(colors.cyan("=> Time") + " : " + colors.yellow((endTime - startTime) / 1000) + "sec")
+    console.log(colors.cyan("========================================================================"))
     printBorder()
+    console.log(colors.cyan("========================================================================"))
+    console.log(colors.cyan("============================== Test Start =============================="))
+    console.log(colors.cyan("========================================================================"))
+    startTime = Date.now()
+
     process.stdout.write("Get Instances")
     const token = await MintableToken.deployed()
     const whitelist = await Whitelist.deployed()
@@ -100,7 +119,7 @@ const deployTest = async (deployer, accounts) => {
     console.log("Initialize")
     await whitelist.addAddressesToWhitelist(buyers, { from: owner })
     await presaleSecond.setDistributor(SaleManager.address, { from: owner })
-    await token.mint(PresaleSecond.address, maxcap*ETH * rate, { from: owner })
+    await token.mint(PresaleSecond.address, ether(maxcap) * rate, { from: owner })
 
     /////////////////////////////////////////////
     console.log("Fraud")
@@ -156,9 +175,25 @@ const deployTest = async (deployer, accounts) => {
     console.log("  log : ", await presaleSecond.weiRaised.call())
 
     console.log("  Buyers")
-    await testCase3(presaleSecond, buyers)
+    await testCase2(presaleSecond, buyers)
     console.log("  log : ", await presaleSecond.weiRaised.call())
     await presaleSecond.extinguish({ from: owner }).should.be.fulfilled
+    console.log("  log : ", await presaleSecond.ignited.call())
+
+    /////////////////////////////////////////////
+    console.log("Not on sale")
+    console.log(":distribute")
+    await saleManager.releaseMany(buyers, { from: owner }).should.be.fulfilled
+    for (let buyer of buyers) {
+        console.log("  log : ", await token.balanceOf(buyer))
+    }
+    console.log(":finalize")
+    await presaleSecond.finalize({ from: owner }).should.be.fulfilled
+
+    endTime = Date.now()
+    console.log(colors.cyan("========================================================================"))
+    console.log(colors.cyan("=> Time") + " : " + colors.yellow((endTime - startTime) / 1000) + "sec")
+    console.log(colors.cyan("========================================================================"))
 
     /////////////////////////////////////////////
     printBorder()
@@ -171,19 +206,167 @@ const deployTest = async (deployer, accounts) => {
     console.log(colors.red("========================================================================"))
 }
 
+const testWhitelist = async (deployer, accounts) => {
+    let startTime
+    let endTime
+
+    printBorder()
+    const owner = accounts[0]
+
+    console.log(colors.cyan("========================================================================"))
+    console.log(colors.cyan("================================ Deploy ================================"))
+    console.log()
+    startTime = Date.now()
+
+    await deployer.deploy(Whitelist, { from: owner })
+
+    endTime = Date.now()
+    console.log()
+    console.log(colors.cyan("=> Time") + " : " + colors.yellow((endTime - startTime) / 1000) + "sec")
+    console.log(colors.cyan("========================================================================"))
+
+    process.stdout.write("Get Instances")
+    const whitelist = await Whitelist.deployed()
+    console.log("...ok")
+
+    process.stdout.write("Get Wallets")
+    const wallets = await readFile('wallet.test.csv')
+    const temp = wallets.slice()
+    const chunks = []
+    while (temp.length > 0)
+        chunks[chunks.length] = temp.splice(0, 10)
+    console.log("...ok")
+
+    console.log(colors.cyan("========================================================================"))
+    console.log(colors.cyan("============================= Whitelisting ============================="))
+    console.log()
+    startTime = Date.now()
+
+    for (let chunk of chunks) {
+        await whitelist.addAddressesToWhitelist(chunk, { from: owner })
+        console.log(chunk)
+    }
+
+    endTime = Date.now()
+    console.log()
+    console.log(colors.cyan("=> Time") + " : " + colors.yellow((endTime - startTime) / 1000) + "sec")
+    console.log(colors.cyan("========================================================================"))
+    printBorder()
+    console.log(colors.cyan("========================================================================"))
+    console.log(colors.cyan("================================= Test ================================="))
+    console.log()
+    startTime = Date.now()
+
+    let success = 0
+    let failure = 0
+
+    for (let wallet of wallets) {
+        const result = await whitelist.whitelist(wallet)
+        console.log(colors.yellow("=> ") + wallet + " : " + colors.cyan(result))
+        if (result)
+            success++
+        else
+            failure++
+    }
+
+    console.log(colors.yellow("=> Success ") + ": " + colors.cyan(success))
+    console.log(colors.yellow("=> Failure ") + ": " + colors.cyan(failure))
+
+    endTime = Date.now()
+    console.log()
+    console.log(colors.cyan("=> Time") + " : " + colors.yellow((endTime - startTime) / 1000) + "sec")
+    console.log(colors.cyan("========================================================================"))
+    printBorder()
+    console.log(colors.red("============================ !!Check List!! ============================"))
+    console.log(colors.yellow("=> Whitelist address        ") + ": " + colors.cyan(Whitelist.address))
+    console.log(colors.red("========================================================================"))
+}
+
+const readFile = (filePath, encoding='utf-8') => {
+    return new Promise((resolve, reject) => {
+        fs.readFile(filePath, encoding, (err, data) => {
+            if(err) reject(err)
+
+            const ws = data.split(/\r|\n/g)
+                .filter(wallet => wallet && Web3.utils.isAddress(wallet.toLowerCase()))
+
+            resolve(ws)
+        })
+    })
+}
+
+const deployMain = async (deployer, accounts) => {
+    printBorder()
+    console.log(colors.red("Warning : Deploy on Mainnet"))
+
+    const owner = accounts[0]
+
+    const maxcap = 3800
+    const exceed = 150
+    const minimum = 0.5
+    const rate = 11500
+
+    await deployer.deploy(Whitelist, { from: owner })
+    await deployer.deploy(PresaleSecond,
+        ether(maxcap),
+        ether(exceed),
+        ether(minimum),
+        rate,
+
+        '0xfbA4D50CAb44f13102C0E270721E1CbEfEbD8922',  // wallet
+        owner,  // distributor
+
+        Whitelist.address,
+        '0xf8b358b3397a8ea5464f8cc753645d42e14b79EA',  // ABL address
+        { from: owner },
+    )
+    await deployer.deploy(
+        SaleManager,
+        PresaleSecond.address,
+        { from: owner },
+    )
+
+    process.stdout.write("Get Instances")
+    const saleManager = await SaleManager.deployed()
+    const presaleSecond = await PresaleSecond.deployed()
+    console.log("...ok")
+
+    // set Distributor
+    await presaleSecond.setDistributor(SaleManager.address, { from: owner })
+
+    // transfer Ownership
+    await presaleSecond.transferOwnership('0xfbA4D50CAb44f13102C0E270721E1CbEfEbD8922', { from: owner })
+    await saleManager.transferOwnership('0xfbA4D50CAb44f13102C0E270721E1CbEfEbD8922', { from: owner })
+
+    printBorder()
+    console.log(colors.red("============================ !!Check List!! ============================"))
+    console.log(colors.yellow("=> Contract owner           ") + ": " + colors.cyan(owner.toString()))
+    console.log(colors.yellow("=> Whitelist address        ") + ": " + colors.cyan(Whitelist.address))
+    console.log(colors.yellow("=> SaleManager address      ") + ": " + colors.cyan(SaleManager.address))
+    console.log(colors.yellow("=> PresaleSecond address    ") + ": " + colors.cyan(PresaleSecond.address))
+    console.log(colors.red("========================================================================"))
+}
+
 module.exports = async (deployer, network, accounts) => {
     console.clear()
+
+    printBorder()
+    printCrowdsale()
+    printBorder()
+    console.log(accounts)
 
     switch (network) {
         case "development":
         case "ropsten":
         case "rinkeby":
-            await deployTest(deployer, accounts)
+            await testSale(deployer, accounts)
             break
         case "mainnet":
-            console.log(colors.red("Warning : Deploy on Mainnet"))
+            await deployMain(deployer, accounts)
             break
         default:
             console.log(colors.red("WTF?"))
     }
+
+    process.exit()
 }
