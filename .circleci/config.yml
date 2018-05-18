@@ -17,8 +17,15 @@ jobs:
       - run:
           name: Install Truffle
           command: |
-            npm install
+            sudo npm install -g openzeppelin-solidity
             sudo npm install -g truffle
+
+      - run:
+          name: Set config
+          command: |
+            touch config.local.test.js
+            touch config.local.main.js
+            touch test.wallets.csv
 
       - run:
           name: Run Test
