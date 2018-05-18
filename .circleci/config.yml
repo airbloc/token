@@ -17,7 +17,7 @@ jobs:
       - run:
           name: Install Truffle
           command: |
-            sudo npm install
+            npm install
             sudo npm install -g truffle
 
       - run:
