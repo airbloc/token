@@ -4,5 +4,6 @@ out
 Thumbs.db
 node_modules
 build
+config.local.*
 .vscode/
 test.*
