@@ -21,13 +21,6 @@ jobs:
             sudo npm install -g truffle
 
       - run:
-          name: Set config
-          command: |
-            touch config.local.test.js
-            touch config.local.main.js
-            touch test.wallets.csv
-
-      - run:
           name: Run Test
           command: |
             truffle test

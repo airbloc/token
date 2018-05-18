@@ -5,5 +5,4 @@ Thumbs.db
 node_modules
 build
 .vscode/
-config.local.*
 test.*
