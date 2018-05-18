@@ -17,9 +17,7 @@ jobs:
       - run:
           name: Install Truffle
           command: |
-            sudo npm install babel-register
-            sudo npm install babel-polyfill
-            sudo npm install openzeppelin-solidity
+            sudo npm install
             sudo npm install -g truffle
 
       - run:
