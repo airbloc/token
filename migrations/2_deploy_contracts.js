@@ -71,9 +71,7 @@ const testSale = async (deployer, accounts) => {
     const minimum = 0.1
     const rate = 11500
 
-    console.log(colors.cyan("========================================================================"))
     console.log(colors.cyan("============================= Deploy Start ============================="))
-    console.log(colors.cyan("========================================================================"))
     startTime = Date.now()
 
     await deployer.deploy(Whitelist, { from: owner })
@@ -98,7 +96,6 @@ const testSale = async (deployer, accounts) => {
     )
 
     endTime = Date.now()
-    console.log(colors.cyan("========================================================================"))
     console.log(colors.cyan("=> Time") + " : " + colors.yellow((endTime - startTime) / 1000) + "sec")
     console.log(colors.cyan("========================================================================"))
     printBorder()
@@ -260,11 +257,11 @@ module.exports = async (deployer, network, accounts) => {
     console.clear()
 
     printBorder()
-    printCrowdsale()
-    printBorder()
     console.log(accounts)
 
     switch (network) {
+        case "test":
+            break
         case "development":
         case "ropsten":
         case "rinkeby":
@@ -276,6 +273,4 @@ module.exports = async (deployer, network, accounts) => {
         default:
             console.log(colors.red("WTF?"))
     }
-
-    process.exit()
 }
