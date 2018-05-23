@@ -7,6 +7,7 @@ jobs:
       - image: trufflesuite/ganache-cli
         command: |
           -a 50
+          -p 7545
           -e 1000000
 
     working_directory: ~/token
@@ -23,4 +24,4 @@ jobs:
       - run:
           name: Run Test
           command: |
-            truffle test
+            truffle test --network test
