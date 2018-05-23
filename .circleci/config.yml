@@ -18,7 +18,6 @@ jobs:
           name: Install Truffle
           command: |
             npm install
-            sudo npm install --save web3
             sudo npm install -g truffle
 
       - run:
