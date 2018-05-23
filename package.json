@@ -47,6 +47,6 @@
         "solium": "^1.1.7",
         "truffle-hdwallet-provider": "0.0.3",
         "truffle-hdwallet-provider-privkey": "git+https://github.com/rhlsthrm/truffle-hdwallet-provider-privkey.git",
-        "truffle-ledger-provider": "0.0.1",
+        "truffle-ledger-provider": "0.0.1"
     }
 }
