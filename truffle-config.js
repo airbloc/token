@@ -15,8 +15,8 @@ module.exports = {
         mainnet: {
             provider: newProvider('mainnet'),
             network_id: 1,
-            gas: 2800000,
-            gasPrice: 18000000000
+            gas: 500000,
+            gasPrice: 12000000000 // 12 Gwei
         },
         ropsten: {
             provider: newProvider('ropsten'),

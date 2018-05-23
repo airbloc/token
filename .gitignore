@@ -3,7 +3,8 @@ out
 **/.DS_Store
 Thumbs.db
 node_modules
+flattened
+abi
 build
-config.local.*
 .vscode/
 wallet.*
