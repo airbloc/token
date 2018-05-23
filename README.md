@@ -1,10 +1,6 @@
 Airbloc Token Contract
 ===================
 
-[![CircleCI](https://circleci.com/gh/airbloc/token/tree/master.svg?style=svg)](https://circleci.com/gh/airbloc/token/tree/master)
+[![CircleCI](https://circleci.com/gh/airbloc/token.svg?style=svg)](https://circleci.com/gh/airbloc/token)
 
-This is contract of airbloc token.
-
-## License
-
-[MIT](LICENSE) © Airbloc Foundation
+This is contract of Airbloc token.
