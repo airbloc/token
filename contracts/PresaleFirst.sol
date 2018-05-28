@@ -23,7 +23,7 @@ contract PresaleFirst is Whitelist, Pausable {
     address public wallet;
     ERC20 public token;
 
-    constructor (
+    function PresaleFirst (
         uint256 _startNumber,
         uint256 _endNumber,
         address _wallet,
@@ -45,6 +45,10 @@ contract PresaleFirst is Whitelist, Pausable {
 
     mapping (address => uint256) public buyers;
     address[] private keys;
+
+    function getKeyLength() external constant returns (uint256) {
+        return keys.length;
+    }
 
     function () external payable {
         collect(msg.sender);
@@ -80,7 +84,7 @@ contract PresaleFirst is Whitelist, Pausable {
 //  validation functions for collect
 //////////////////
 
-    function preValidation() private view returns (bool) {
+    function preValidation() private constant returns (bool) {
         // check minimum
         bool a = msg.value >= minimum;
 
@@ -90,12 +94,12 @@ contract PresaleFirst is Whitelist, Pausable {
         return a && b;
     }
 
-    function getPurchaseAmount(address _buyer) private view returns (uint256) {
+    function getPurchaseAmount(address _buyer) private constant returns (uint256) {
         return checkOverMaxcap(checkOverExceed(_buyer));
     }
 
     // 1. check over exceed
-    function checkOverExceed(address _buyer) private view returns (uint256) {
+    function checkOverExceed(address _buyer) private constant returns (uint256) {
         if(msg.value >= exceed) {
             return exceed;
         } else if(msg.value.add(buyers[_buyer]) >= exceed) {
@@ -106,7 +110,7 @@ contract PresaleFirst is Whitelist, Pausable {
     }
 
     // 2. check sale hardcap
-    function checkOverMaxcap(uint256 amount) private view returns (uint256) {
+    function checkOverMaxcap(uint256 amount) private constant returns (uint256) {
         if((amount + weiRaised) >= maxcap) {
             return (maxcap.sub(weiRaised));
         } else {
@@ -115,43 +119,72 @@ contract PresaleFirst is Whitelist, Pausable {
     }
 
 //////////////////
-//  release
+//  finalize
 //////////////////
+
     bool finalized = false;
 
-    function release() external onlyOwner {
+    function finalize() public onlyOwner {
         require(!finalized);
         require(weiRaised >= maxcap || block.number >= endNumber);
 
-        wallet.transfer(address(this).balance);
-
-        for(uint256 i = 0; i < keys.length; i++) {
-            token.safeTransfer(keys[i], buyers[keys[i]].mul(rate));
-            emit Release(keys[i], buyers[keys[i]].mul(rate));
-        }
-
-        withdraw();
+        // dev team
+        withdrawEther();
+        withdrawToken();
 
         finalized = true;
     }
 
-    function refund() external onlyOwner {
+//////////////////
+//  release
+//////////////////
+
+    function release(address addr) public onlyOwner {
         require(!finalized);
-        pause();
 
-        withdraw();
+        token.safeTransfer(addr, buyers[addr].mul(rate));
+        emit Release(addr, buyers[addr].mul(rate));
 
-        for(uint256 i = 0; i < keys.length; i++) {
-            keys[i].transfer(buyers[keys[i]]);
-            emit Refund(keys[i], buyers[keys[i]]);
-        }
-
-        finalized = true;
+        buyers[addr] = 0;
     }
 
-    function withdraw() public onlyOwner {
+    function releaseMany(uint256 start, uint256 end) external onlyOwner {
+        for(uint256 i = start; i < end; i++) {
+            release(keys[i]);
+        }
+    }
+
+//////////////////
+//  refund
+//////////////////
+
+    function refund(address addr) public onlyOwner {
+        require(!finalized);
+
+        addr.transfer(buyers[addr]);
+        emit Refund(addr, buyers[addr]);
+
+        buyers[addr] = 0;
+    }
+
+    function refundMany(uint256 start, uint256 end) external onlyOwner {
+        for(uint256 i = start; i < end; i++) {
+            refund(keys[i]);
+        }
+    }
+
+//////////////////
+//  withdraw
+//////////////////
+
+    function withdrawToken() public onlyOwner {
         token.safeTransfer(wallet, token.balanceOf(this));
         emit Withdraw(wallet, token.balanceOf(this));
+    }
+
+    function withdrawEther() public onlyOwner {
+        wallet.transfer(address(this).balance);
+        emit Withdraw(wallet, address(this).balance);
     }
 
 //////////////////
