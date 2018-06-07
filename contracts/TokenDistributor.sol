@@ -24,7 +24,7 @@ contract TokenDistributor is Ownable {
         address _genesis,
         address _tokenLock
     ) public {
-        require(_ratioY > _ratioX);    // x = y -> x/y = 1
+        require(_ratioY >= _ratioX);    // x = y -> x/y = 1
         require(_ratioY > 0);
         require(_token != address(0));
         require(_genesis != address(0));
