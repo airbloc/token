@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:10.5
+      - image: circleci/node:9.11
       - image: trufflesuite/ganache-cli:v6.1.6
         command: |
           -a 50
@@ -18,7 +18,7 @@ jobs:
       - run:
           name: Resolve Dependencies
           command: |
-            npm ci
+            npm install
 
       - run:
           name: Install Truffle
