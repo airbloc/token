@@ -16,9 +16,13 @@ jobs:
       - checkout
 
       - run:
-          name: Install Truffle
+          name: Resolve Dependencies
           command: |
             npm install
+
+      - run:
+          name: Install Truffle
+          command: |
             sudo npm install -g truffle
 
       - run:
