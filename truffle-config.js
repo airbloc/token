@@ -3,8 +3,6 @@ require('babel-polyfill')
 
 const newProvider = require('./config.local.provider.js')
 
-console.clear()
-
 module.exports = {
     networks: {
         test: {
